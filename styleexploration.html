@@ -497,7 +497,7 @@ styles.onChange(() => {
         //wallsArray[i].material.color = new THREE.Color(0xc50202);
            // console.log('ress', wallsArray[i]);
             }
-            edgesArray[i].computeLineDistances();
+           
 
             ShadMatWalls = ShadMatWalls_;  
             ShadMatRoof = ShadMatRoof_;  
@@ -678,7 +678,25 @@ view.notifyChange();
             view.notifyChange(true);
       }
     );
-   
+    edge.add({DashSize : 1.0}, 'DashSize').min(1).max(10).step(1).onChange(
+      function updateOpacityRoof(value){
+            ShadMatEdges.dashSize = value;
+            view.notifyChange(true);
+      }
+    );
+    
+    edge.add({GapSize : 1.0}, 'GapSize').min(1).max(10).step(1).onChange(
+      function updateOpacityRoof(value){
+            ShadMatEdges.gapSize = value;
+            view.notifyChange(true);
+      }
+    );
+    edge.addColor({DashColor : 0xffffff}, 'DashColor').onChange(
+      function updateColorEdges(value){
+        ShadMatEdges.color = new THREE.Color(value);
+            view.notifyChange(true);
+      }
+    ); 
 
    
         </script>
