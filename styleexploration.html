@@ -426,7 +426,7 @@ let uniforms = {
     texture: {type: 'sampler2D', value: defaultexture},
     //color: {type: 'c', value: defaultColor},                    // Default color parameter
     opacity: {type: 'f', value: 1.0},                           // Default opacity parameter
-    texture_scale : {type: 'f', value: 0.02},                   // Scale factor on texture (float between 0.0 and 1.0)
+    texture_scale : {type: 'f', value: 0.03},                   // Scale factor on texture (float between 0.0 and 1.0)
     time       : {type: 'f', value: time},                      // time to create animation
     currentPos:  new THREE.Uniform(currentPos),                 // Current position in the trace
     
@@ -610,7 +610,7 @@ var styleModification = menuGlobe.gui.addFolder('Style Modification')
       }
     );
 
-    roof.add({roofScale : 0.03}, 'roofScale').min(0.03).max(0.1).step(0.01).onChange(
+    roof.add({textureScale : 0.03}, 'textureScale').min(0.03).max(0.1).step(0.01).onChange(
       function updateScaleRoofTexture(value){
             ShadMatRoof3.uniforms.texture_scale.value = value;
             view.notifyChange(true);
@@ -636,7 +636,7 @@ var styleModification = menuGlobe.gui.addFolder('Style Modification')
     );
     
 
-    wall.add({wallScale : 0.03}, 'wallScale').min(0.03).max(0.1).step(0.01).onChange(
+    wall.add({textureScale : 0.03}, 'textureScale').min(0.03).max(0.1).step(0.01).onChange(
       function updateScaleWallTexture(value){
             ShadMatWalls3.uniforms.texture_scale.value = value;
             view.notifyChange(true);
