@@ -244,9 +244,7 @@ const vertexShader = `
             void main(){
             #include <logdepthbuf_fragment>
             
-                vec2 normUV = texture_scale * vec2(vUv.x * 400000., vUv.y);
-                
-                normUV = vec2(mod(normUV.x, 1.), mod(normUV.y*1.5, 1.));  
+                vec2 normUV = texture_scale * vec2(vUv.x * 100000., vUv.y);
                 if (mode == MODE_COLOR) {
                     gl_FragColor = texture2D(texture_walls, normUV); // + vec2(fract(time),0.)); // gl_FragCoord.xy / vec2(1920.,1080.)
                   //  if(dist < 200.) gl_FragColor = texture2D(texture_walls, normUV + vec2(0., fract(time)));
@@ -428,7 +426,7 @@ let uniforms = {
     texture: {type: 'sampler2D', value: defaultexture},
     //color: {type: 'c', value: defaultColor},                    // Default color parameter
     opacity: {type: 'f', value: 1.0},                           // Default opacity parameter
-    texture_scale : {type: 'f', value: 0.008},                   // Scale factor on texture (float between 0.0 and 1.0)
+    texture_scale : {type: 'f', value: 0.02},                   // Scale factor on texture (float between 0.0 and 1.0)
     time       : {type: 'f', value: time},                      // time to create animation
     currentPos:  new THREE.Uniform(currentPos),                 // Current position in the trace
     
@@ -454,6 +452,7 @@ var ShadMatWalls_ = createMaterial(vertexShader, fragmentShader_walls, new THREE
 var ShadMatWalls1 = createMaterial(vertexShader, fragmentShader_walls, new THREE.Color(0x270906)); 
 var ShadMatWalls2 = createMaterial_opacity(vertexShader, fragmentShader_walls, new THREE.Color(0xffffff));
 var ShadMatWalls3 = createMaterial_texture(vertexShader, fragmentShader_walls_texture, new THREE.TextureLoader().load("textures/wall.png"));
+
 var ShadMatEdges = createMaterial(vertexShader, fragmentShader_edges, new THREE.Color(0Xffffff));
 var ShadMatEdges_ = createMaterial(vertexShader, fragmentShader_edges, new THREE.Color(0Xffffff)); 
 var ShadMatEdges1 = new THREE.LineDashedMaterial({color: 0xffffff, dashSize:1,linewidth: 100, gapSize: 3});
@@ -611,6 +610,12 @@ var styleModification = menuGlobe.gui.addFolder('Style Modification')
       }
     );
 
+    roof.add({roofScale : 0.03}, 'roofScale').min(0.03).max(0.1).step(0.01).onChange(
+      function updateScaleRoofTexture(value){
+            ShadMatRoof3.uniforms.texture_scale.value = value;
+            view.notifyChange(true);
+      }
+    );
     wall.addColor({Color : ShadMatWalls.uniforms.color.value.getHex()}, 'Color').onChange(
       function updateColorWall(value){
             ShadMatWalls.uniforms.color.value = new THREE.Color(value);
@@ -629,11 +634,18 @@ var styleModification = menuGlobe.gui.addFolder('Style Modification')
             view.notifyChange(true);
       }
     );
+    
+
+    wall.add({wallScale : 0.03}, 'wallScale').min(0.03).max(0.1).step(0.01).onChange(
+      function updateScaleWallTexture(value){
+            ShadMatWalls3.uniforms.texture_scale.value = value;
+            view.notifyChange(true);
+      }
+    );
     var edgeParams = {
                edgeStyles: 'Continuous',
             };  
             
-          
     var edgeStyles = edge.add(edgeParams, 'edgeStyles', [ "Continuous", "Dashed"]).name('edgeStyles').listen();
 
     edgeStyles.onChange(() => {
