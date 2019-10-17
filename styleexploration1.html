@@ -18,8 +18,6 @@
         <script src="js/loading_screen.js"></script>
         <script src="js/proj4defs/3946.js"></script>
         <script src="dist/debug.js"></script>
-        <script src="js/jquery-3.3.0.js"></script>
-
         
         <script type="text/javascript">
         
@@ -72,15 +70,15 @@
             ////////////building
             var color = new itowns.THREE.Color();
            
-            function altitudeBuildings(properties) {
+            /*function altitudeBuildings(properties) {
                 return properties.z_max - properties.hauteur; //properties.z_min - properties.hauteur;
-            }
+            }*/
             function extrudeBuildings(properties) {
-                return properties.hauteur;
+                return properties.height;
             }
-            function acceptFeature(properties) {
+            /*function acceptFeature(properties) {
                 return !!properties.hauteur;
-            }
+            }*/
             scaler = function update(/* dt */) {
                 var i;
                 var mesh;
@@ -100,11 +98,11 @@
             view.addFrameRequester(itowns.MAIN_LOOP_EVENTS.BEFORE_RENDER, scaler);
             
             var wfsBuildingSource = new itowns.WFSSource({
-                url: 'https://wxs.ign.fr/3ht7xcw6f7nciopo16etuqp2/geoportail/wfs?',
-                version: '2.0.0',
-                typeName: 'BDTOPO_BDD_WLD_WGS84G:bati_remarquable,BDTOPO_BDD_WLD_WGS84G:bati_indifferencie,BDTOPO_BDD_WLD_WGS84G:bati_industriel',
+                url: 'http://localhost:8080/geoserver/wfs?',
+                version: '1.1.0',
+                typeName: 'focuscontext:ogrgeojson',
                 projection: 'EPSG:4326',
-                ipr: 'IGN',
+                //ipr: 'IGN',
                 format: 'application/json',
                 zoom: {  min: 16, max:16 }
             });
@@ -117,7 +115,7 @@
                     color: () => new THREE.Color(0xffffff),
                     
                     batchId: function (property, featureId) { return featureId; },
-                     altitude: altitudeBuildings,
+                     //altitude: altitudeBuildings,
                     extrude: extrudeBuildings,
                     attributes: {
                         color: { type: Uint8Array, value: (prop, id, extruded) => { return new THREE.Color(extruded ? 0xffffff : 0x888888);}, itemSize:3, normalized:true },
@@ -133,8 +131,6 @@
             view.addLayer(wfsBuildingLayer);
            
 function modifyShader(mesh) {
-    $(styleModification.domElement).attr("hidden", true);
-
 // Start with super small scale (scaling effect at load)
 mesh.scale.z = 0.01;
 meshes.push(mesh);
@@ -501,7 +497,7 @@ styles.onChange(() => {
            // console.log('ress', wallsArray[i]);
             }
            
-$(styleModification.domElement).attr("hidden", true);
+
             ShadMatWalls = ShadMatWalls_;  
             ShadMatRoof = ShadMatRoof_;  
             ShadMatEdges =  ShadMatEdges_;  
@@ -511,16 +507,6 @@ view.notifyChange();
     
  else if (params.styles==='Typical'){
     for (var i = 0; i < wallsArray.length; ++i){
-        $(styleModification.domElement).attr("hidden", false);
-        $(wallColor.domElement).attr("hidden", false);
-        $(wallOpacity.domElement).attr("hidden", false);
-        $(wallTextureMode.domElement).attr("hidden", true);
-        $(wallTextureScale.domElement).attr("hidden", true);
-        $(roofColor.domElement).attr("hidden", false);
-        $(roofOpacity.domElement).attr("hidden", false);
-        $(roofTextureMode.domElement).attr("hidden", true);
-        $(roofTextureScale.domElement).attr("hidden", true);
-        $(line.domElement).attr("hidden", false);
 
         wallsArray[i].material = ShadMatWalls1;
         roofArray[i].material = ShadMatRoof1;
@@ -539,17 +525,6 @@ view.notifyChange();
   }
   else if (params.styles==='Discreet'){
     for (var i = 0; i < wallsArray.length; ++i){
-        $(styleModification.domElement).attr("hidden", false);
-        $(wallColor.domElement).attr("hidden", true);
-        $(wallOpacity.domElement).attr("hidden", false);
-        $(wallTextureMode.domElement).attr("hidden", true);
-        $(wallTextureScale.domElement).attr("hidden", true);
-        $(roofColor.domElement).attr("hidden", true);
-        $(roofOpacity.domElement).attr("hidden", false);
-        $(roofTextureMode.domElement).attr("hidden", true);
-        $(roofTextureScale.domElement).attr("hidden", true);
-        $(line.domElement).attr("hidden", false);
-
         wallsArray[i].material = ShadMatWalls2;
         roofArray[i].material = ShadMatRoof2;
         edgesArray[i].material = ShadMatEdges2;
@@ -564,16 +539,6 @@ view.notifyChange();
   }
   else if (params.styles==='Photorealistic'){
     for (var i = 0; i < wallsArray.length; ++i){
-        $(styleModification.domElement).attr("hidden", false);
-        $(wallColor.domElement).attr("hidden", true);
-        $(wallOpacity.domElement).attr("hidden", true);
-        $(wallTextureMode.domElement).attr("hidden", false);
-        $(wallTextureScale.domElement).attr("hidden", false);
-        $(roofColor.domElement).attr("hidden", true);
-        $(roofOpacity.domElement).attr("hidden", true);
-        $(roofTextureMode.domElement).attr("hidden", false);
-        $(roofTextureScale.domElement).attr("hidden", false);
-        $(line.domElement).attr("hidden", true);
 
         wallsArray[i].material = ShadMatWalls3;
         roofArray[i].material = ShadMatRoof3;
@@ -625,45 +590,45 @@ var styleModification = menuGlobe.gui.addFolder('Style Modification')
   var roof= polygon.addFolder('Roof');
   var line = styleModification.addFolder('Line');
   var edge = line.addFolder('Edge')
-   var roofColor = roof.addColor({Color : ShadMatRoof.uniforms.color.value.getHex()}, 'Color').onChange(
+   roof.addColor({Color : ShadMatRoof.uniforms.color.value.getHex()}, 'Color').onChange(
       function updateColorRoof(value){
             ShadMatRoof.uniforms.color.value = new THREE.Color(value);
             view.notifyChange(true);
       }
     );
     
-   var roofOpacity = roof.add({Opacity : 1.0}, 'Opacity').min(0).max(1).onChange(
+    roof.add({Opacity : 1.0}, 'Opacity').min(0).max(1).onChange(
       function updateOpacityRoof(value){
             ShadMatRoof.uniforms.opacity.value = value;
             view.notifyChange(true);
       }
     );
-   var roofTextureMode = roof.add({TextureMode : ShadMatRoof3.uniforms.mode.value}, 'TextureMode').min(0).max(2).step(1).onChange(
+    roof.add({TextureMode : ShadMatRoof3.uniforms.mode.value}, 'TextureMode').min(0).max(2).step(1).onChange(
       function updateRoofMode(value){
         ShadMatRoof3.uniforms.mode.value = value;
             view.notifyChange(true);
       }
     );
 
-   var roofTextureScale = roof.add({textureScale : 0.03}, 'textureScale').min(0.03).max(0.1).step(0.01).onChange(
+    roof.add({textureScale : 0.03}, 'textureScale').min(0.03).max(0.1).step(0.01).onChange(
       function updateScaleRoofTexture(value){
             ShadMatRoof3.uniforms.texture_scale.value = value;
             view.notifyChange(true);
       }
     );
-   var wallColor = wall.addColor({Color : ShadMatWalls.uniforms.color.value.getHex()}, 'Color').onChange(
+    wall.addColor({Color : ShadMatWalls.uniforms.color.value.getHex()}, 'Color').onChange(
       function updateColorWall(value){
             ShadMatWalls.uniforms.color.value = new THREE.Color(value);
             view.notifyChange(true);
       }
     ); 
-    var wallOpacity = wall.add({Opacity : 1.0}, 'Opacity').min(0).max(1).onChange(
+    wall.add({Opacity : 1.0}, 'Opacity').min(0).max(1).onChange(
       function updateOpacityRoof(value){
             ShadMatWalls.uniforms.opacity.value = value;
             view.notifyChange(true);
       }
     );
-  var wallTextureMode =  wall.add({TextureMode : ShadMatWalls3.uniforms.mode.value}, 'TextureMode').min(0).max(2).step(1).onChange(
+    wall.add({TextureMode : ShadMatWalls3.uniforms.mode.value}, 'TextureMode').min(0).max(2).step(1).onChange(
       function updateWallMode(value){
         ShadMatWalls3.uniforms.mode.value = value;
             view.notifyChange(true);
@@ -671,26 +636,22 @@ var styleModification = menuGlobe.gui.addFolder('Style Modification')
     );
     
 
-    var wallTextureScale = wall.add({textureScale : 0.03}, 'textureScale').min(0.03).max(0.1).step(0.01).onChange(
+    wall.add({textureScale : 0.03}, 'textureScale').min(0.03).max(0.1).step(0.01).onChange(
       function updateScaleWallTexture(value){
             ShadMatWalls3.uniforms.texture_scale.value = value;
             view.notifyChange(true);
       }
     );
     var edgeParams = {
-               edgeStyles: '',
+               edgeStyles: 'Continuous',
             };  
             
-    var edgeStyles = edge.add(edgeParams, 'edgeStyles', [ "","Continuous", "Dashed"]).name('edgeStyles').listen();
+    var edgeStyles = edge.add(edgeParams, 'edgeStyles', [ "Continuous", "Dashed"]).name('edgeStyles').listen();
 
     edgeStyles.onChange(() => {
     if (edgeParams.edgeStyles==='Continuous'){
     for (var i = 0; i < wallsArray.length; ++i){
-        $(edgeColor.domElement).attr("hidden", false);
-        $(edgeOpacity.domElement).attr("hidden", false);
-        $(edgeDashSize.domElement).attr("hidden", true);
-        $(edgeGapSize.domElement).attr("hidden", true);
-        $(edgeDashColor.domElement).attr("hidden", true);
+
         edgesArray[i].material = ShadMatEdges_;
         //wallsArray[i].material.color = new THREE.Color(0xc50202);
            // console.log('ress', wallsArray[i]);
@@ -703,12 +664,7 @@ view.notifyChange();
     
  else if (edgeParams.edgeStyles==='Dashed'){
     for (var i = 0; i < wallsArray.length; ++i){
-        $(edgeColor.domElement).attr("hidden", true);
-        $(edgeOpacity.domElement).attr("hidden", true);
-        $(edgeDashSize.domElement).attr("hidden", false);
-        $(edgeGapSize.domElement).attr("hidden", false);
-        $(edgeDashColor.domElement).attr("hidden", false);
-
+       
         
         //edgesArray[i].geometry.computeLineDistances();
         edgesArray[i].material = ShadMatEdges1; 
@@ -722,32 +678,32 @@ view.notifyChange();
 view.notifyChange();
  }
  });
-    var edgeColor = edge.addColor({Color : ShadMatEdges.uniforms.color.value.getHex()}, 'Color').onChange(
+    edge.addColor({Color : ShadMatEdges.uniforms.color.value.getHex()}, 'Color').onChange(
       function updateColorEdges(value){
         ShadMatEdges.uniforms.color.value = new THREE.Color(value);
             view.notifyChange(true);
       }
     ); 
-   var edgeOpacity = edge.add({Opacity : 1.0}, 'Opacity').min(0).max(1).onChange(
+    edge.add({Opacity : 1.0}, 'Opacity').min(0).max(1).onChange(
       function updateOpacityRoof(value){
             ShadMatEdges.uniforms.opacity.value = value;
             view.notifyChange(true);
       }
     );
-    var edgeDashSize = edge.add({DashSize : 1.0}, 'DashSize').min(1).max(10).step(1).onChange(
+    edge.add({DashSize : 1.0}, 'DashSize').min(1).max(10).step(1).onChange(
       function updateOpacityRoof(value){
             ShadMatEdges.dashSize = value;
             view.notifyChange(true);
       }
     );
     
-   var edgeGapSize = edge.add({GapSize : 1.0}, 'GapSize').min(1).max(10).step(1).onChange(
+    edge.add({GapSize : 1.0}, 'GapSize').min(1).max(10).step(1).onChange(
       function updateOpacityRoof(value){
             ShadMatEdges.gapSize = value;
             view.notifyChange(true);
       }
     );
-   var edgeDashColor = edge.addColor({DashColor : 0xffffff}, 'DashColor').onChange(
+    edge.addColor({DashColor : 0xffffff}, 'DashColor').onChange(
       function updateColorEdges(value){
         ShadMatEdges.color = new THREE.Color(value);
             view.notifyChange(true);
