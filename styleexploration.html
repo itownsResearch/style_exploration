@@ -650,6 +650,8 @@ view.notifyChange();
             ShadMatRoof = ShadMatRoof_typ;
             ShadMatWalls = ShadMatWalls_typ;
             ShadMatEdges= ShadMatEdges_typ_cont;
+            wfsBuildingLayer.opacity = ShadMatEdges_typ_cont.opacity;
+
 view.notifyChange();
   }
   else if (params.styles==='Discreet'){
@@ -658,7 +660,6 @@ view.notifyChange();
         $(styleModification_pho.domElement).attr("hidden", true);
         $(styleModification_dis.domElement).attr("hidden", false);
         $(styleModification_typ.domElement).attr("hidden", true);
-
         $(styleModification_def.domElement).attr("hidden", true);
 
         //$(wallColor.domElement).attr("hidden", true);
@@ -675,7 +676,7 @@ view.notifyChange();
         roofArray[i].material = ShadMatRoof_dis;
         edgesArray[i].material = ShadMatEdges_dis_cont;
         wfsBuildingLayer.opacity = ShadMatWalls_dis.opacity;
-        wfsBuildingLayer.opacity = ShadMatRoof_dis.opacity;
+        //wfsBuildingLayer.opacity = ShadMatRoof_dis.opacity;
 
         //i can use above line, but it doesnot work when we want to apply different opacity on different building parts or:----> following solution
         //we are using geometrylayer.js definelayerproperty('opacity') i can remove this and check weather it works. it can help for different opacity on diffeerent bui
@@ -695,9 +696,6 @@ view.notifyChange();
         $(styleModification_pho.domElement).attr("hidden", false);
         $(styleModification_dis.domElement).attr("hidden", true);
         $(styleModification_typ.domElement).attr("hidden", true);
-
-
-
         $(styleModification_def.domElement).attr("hidden", true);
        // $(wallColor.domElement).attr("hidden", true);
         //$(wallOpacity.domElement).attr("hidden", true);
@@ -712,7 +710,6 @@ view.notifyChange();
         wallsArray[i].material = ShadMatWalls3;
         roofArray[i].material = ShadMatRoof3;
         edgesArray[i].material = ShadMatEdges3;
-       wfsBuildingLayer.opacity = ShadMatEdges3.opacity;
 
         //wallsArray[i].material.color = new THREE.Color(0xc50202);
           //  console.log('ress', wallsArray[i]);
