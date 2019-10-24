@@ -538,14 +538,14 @@ var ShadMatRoof = createMaterial(vertexShader, fragmentShader_roof, new THREE.Co
 var ShadMatRoof_ = createMaterial(vertexShader, fragmentShader_roof, new THREE.Color(0Xffffff));
 var ShadMatRoof_typ  = createMaterial(vertexShader, fragmentShader_roof, new THREE.Color(0X6c3527)); 
 var ShadMatRoof_dis  = createMaterial_opacity(vertexShader, fragmentShader_roof_opacity, new THREE.Color(0X000000));
-var ShadMatRoof3  = createMaterial_texture(vertexShader, fragmentShader_roof_texture, new THREE.TextureLoader().load("textures/roof.png"));    
+var ShadMatRoof3  = createMaterial_texture(vertexShader, fragmentShader_roof_texture/*, new THREE.TextureLoader().load("textures/roof.png")*/);    
 var ShadMatWalls = createMaterial(vertexShader, fragmentShader_walls, new THREE.Color(0Xffffff)); 
 var ShadMatWalls_ = createMaterial(vertexShader, fragmentShader_walls, new THREE.Color(0Xffffff));
 var ShadMatWalls_ref = new THREE.MeshLambertMaterial({color:0Xffffff, side: THREE.DoubleSide });
 
 var ShadMatWalls_typ = createMaterial(vertexShader, fragmentShader_walls, new THREE.Color(0x270906)); 
 var ShadMatWalls_dis = createMaterial_opacity(vertexShader, fragmentShader_walls_opacity, new THREE.Color(0xffffff));
-var ShadMatWalls3 = createMaterial_texture(vertexShader, fragmentShader_walls_texture, new THREE.TextureLoader().load("textures/wall.png"));
+var ShadMatWalls3 = createMaterial_texture(vertexShader, fragmentShader_walls_texture/*, new THREE.TextureLoader().load("textures/wall.png")*/);
 
 var ShadMatEdges = createMaterial(vertexShader, fragmentShader_edges, new THREE.Color(0Xffffff));
 var ShadMatEdges_ = createMaterial(vertexShader, fragmentShader_edges, new THREE.Color(0Xffffff)); 
@@ -599,7 +599,10 @@ var a = styles.onChange(() => {
 
 
     for (var i = 0; i < wallsArray.length; ++i){
-        wallsArray[i].material = ShadMatWalls_;
+        if (shadingParams.shadingStyles==='with'){
+            wallsArray[i].material = ShadMatWalls_ref} else {
+                wallsArray[i].material = ShadMatWalls_;
+        }
         roofArray[i].material = ShadMatRoof_;
         edgesArray[i].material = ShadMatEdges_;
         //wallsArray[i].material.color = new THREE.Color(0xc50202);
@@ -607,7 +610,10 @@ var a = styles.onChange(() => {
             }
             
            
-            ShadMatWalls = ShadMatWalls_;  
+            if (shadingParams.shadingStyles==='with'){
+                ShadMatWalls = ShadMatWalls_ref} else {
+                    ShadMatWalls = ShadMatWalls_;
+        }
             ShadMatRoof = ShadMatRoof_;  
             ShadMatEdges =  ShadMatEdges_;  
 
@@ -643,13 +649,19 @@ view.notifyChange();
         roofArray[i].material = ShadMatRoof_typ;
         //edgesArray[i].computeLineDistances();
         //edgesArray[i].geometry.computeLineDistances();
-        edgesArray[i].material = ShadMatEdges_typ_cont; //console.log(edgesArray[i]);
+        if (edgeParams_typ.edgeStyles_typ==='Dashed'){
+        edgesArray[i].material = ShadMatEdges_typ_dash} else {
+            edgesArray[i].material = ShadMatEdges_typ_cont;
+        } //console.log(edgesArray[i]);
         //wallsArray[i].material.color = new THREE.Color(0xc50202);
            // console.log('ress', wallsArray[i]);
             }
             ShadMatRoof = ShadMatRoof_typ;
             ShadMatWalls = ShadMatWalls_typ;
-            ShadMatEdges= ShadMatEdges_typ_cont;
+            if (edgeParams_typ.edgeStyles_typ==='Dashed'){
+                ShadMatEdges = ShadMatEdges_typ_dash} else {
+                    ShadMatEdges = ShadMatEdges_typ_cont;
+        }
             wfsBuildingLayer.opacity = ShadMatEdges_typ_cont.opacity;
 
 view.notifyChange();
@@ -674,7 +686,10 @@ view.notifyChange();
        // var ShadMatWalls_ref = new THREE.MeshLambertMaterial({color:0Xffffff, side: THREE.DoubleSide });
         wallsArray[i].material = ShadMatWalls_dis;
         roofArray[i].material = ShadMatRoof_dis;
-        edgesArray[i].material = ShadMatEdges_dis_cont;
+        if (edgeParams_dis.edgeStyles_dis==='Dashed'){
+        edgesArray[i].material = ShadMatEdges_dis_dash} else {
+            edgesArray[i].material = ShadMatEdges_dis_cont;
+        }
         wfsBuildingLayer.opacity = ShadMatWalls_dis.opacity;
         //wfsBuildingLayer.opacity = ShadMatRoof_dis.opacity;
 
@@ -688,7 +703,10 @@ view.notifyChange();
             ShadMatRoof = ShadMatRoof_dis;
             ShadMatWalls = ShadMatWalls_dis;
             //ShadMatWalls.transparent = true;
-            ShadMatEdges = ShadMatEdges_dis_cont;
+            if (edgeParams_dis.edgeStyles_dis==='Dashed'){
+                ShadMatEdges = ShadMatEdges_dis_dash} else {
+                    ShadMatEdges = ShadMatEdges_dis_cont;
+        }
 view.notifyChange();
   }
   else if (params.styles==='Photorealistic'){
@@ -710,7 +728,6 @@ view.notifyChange();
         wallsArray[i].material = ShadMatWalls3;
         roofArray[i].material = ShadMatRoof3;
         edgesArray[i].material = ShadMatEdges3;
-
         //wallsArray[i].material.color = new THREE.Color(0xc50202);
           //  console.log('ress', wallsArray[i]);
             }
@@ -718,7 +735,6 @@ view.notifyChange();
             ShadMatRoof = ShadMatRoof3;
             ShadMatWalls = ShadMatWalls3;
             ShadMatEdges = ShadMatEdges3;
-
     view.notifyChange();
   }
   
