@@ -35,7 +35,6 @@
             var edgesArray = [];
             var styleArray= [];
             var scaler;
-            
             // `viewerDiv` will contain iTowns' rendering area (`<canvas>`)
             var viewerDiv = document.getElementById('viewerDiv');
             // Instanciate iTowns GlobeView*
@@ -126,7 +125,7 @@
                         id: { type: Uint32Array, value: (prop, id) => { return id;}}
                     }}
                 ),
-                onMeshCreated: modifyShader, 
+                onMeshCreated: modifyShader,
                 
                 overrideAltitudeInToZero: true,
                 source: wfsBuildingSource
@@ -174,16 +173,9 @@ let style_vv = { "styles" : [] };
         })
         console.log(Object.values(style_vv));
     //alert( JSON.stringify(style_vv) );
-    
-
-
-
-
-   
 
 };
 
- 
 
 //vertex  shaders
 const vertexShader = `
@@ -208,88 +200,14 @@ const vertexShader = `
                 #include <logdepthbuf_vertex>
             }
             `;
-// Fragment shader
+// Fragment shaders
+      
             const fragmentShader_walls = `
             #include <logdepthbuf_pars_fragment>
             #define MODE_COLOR   0
             #define MODE_TEXTURE 1
             #define MODE_UV      2
-            uniform sampler2D texture_walls;
-            uniform int mode;
-          
-            uniform float texture_scale;
-            varying vec2 vUv;
-            uniform float opacity;
-            uniform vec3 color;
-            uniform float time;
-            uniform vec3 currentPos;
-            varying float dist;
-            varying float vZbottom;
-            void main(){
-            #include <logdepthbuf_fragment>
-            
-                vec2 normUV = texture_scale * vec2(vUv.x * 100000., vUv.y);
-                normUV = vec2(mod(normUV.x, 1.), mod(normUV.y*1.5, 1.));  
-                if (mode == MODE_TEXTURE) {
-                    gl_FragColor = texture2D(texture_walls, normUV); // + vec2(fract(time),0.)); // gl_FragCoord.xy / vec2(1920.,1080.)
-                  //  if(dist < 200.) gl_FragColor = texture2D(texture_walls, normUV + vec2(0., fract(time)));
-                } else if (mode == MODE_UV) {
-                    float uvu = fract(normUV.x + time * 5.);
-                    vec3 col = vec3(0.745, 0.215, 0.698);
-                    if(uvu > 0.5) col = vec3(0.811, 0.745, 0.807);
-                    if(dist < 200. && fract(normUV.y) > 0.5) col = vec3(0.111, 0.245, 0.807);
-                    gl_FragColor = vec4(col,1.); // vec4(fract(normUV),0.,1.);
-                } else {
-                gl_FragColor = vec4(color, opacity);
-                }
-                //if(dist < 200.) gl_FragColor = vec4(dist/200.,0.,0.,1.);
-                if(dist < 200.) gl_FragColor = mix(gl_FragColor, vec4(1.,0.,0.,1.), 0.2);
-                
-                gl_FragColor.r *= vZbottom / 50.;
-                
-            }
-            `;
-            const fragmentShader_walls_opacity = `
-            #include <logdepthbuf_pars_fragment>
-            #define MODE_COLOR   0
-            #define MODE_TEXTURE 1
-            #define MODE_UV      2
-            uniform sampler2D texture_walls;
-            uniform int mode;
-          
-            uniform float texture_scale;
-            varying vec2 vUv;
-            uniform float opacity;
-            uniform vec3 color;
-            uniform float time;
-            uniform vec3 currentPos;
-            varying float dist;
-            varying float vZbottom;
-            void main(){
-            #include <logdepthbuf_fragment>
-            
-                vec2 normUV = texture_scale * vec2(vUv.x * 100000., vUv.y);
-                normUV = vec2(mod(normUV.x, 1.), mod(normUV.y*1.5, 1.));  
-                if (mode == MODE_TEXTURE) {
-                    gl_FragColor = texture2D(texture_walls, normUV); // + vec2(fract(time),0.)); // gl_FragCoord.xy / vec2(1920.,1080.)
-                  //  if(dist < 200.) gl_FragColor = texture2D(texture_walls, normUV + vec2(0., fract(time)));
-                } else if (mode == MODE_UV) {
-                    gl_FragColor = vec4(fract(normUV),0.,1.);
-                } else {
-                gl_FragColor = vec4(color, opacity);
-                }
-                //if(dist < 200.) gl_FragColor = vec4(dist/200.,0.,0.,1.);
-                if(dist < 200.) gl_FragColor = mix(gl_FragColor, vec4(1.,0.,0.,1.), 0.2);
-                
-                gl_FragColor.r *= vZbottom / 50.;
-                
-            }
-            `;
-            const fragmentShader_walls_texture = `
-            #include <logdepthbuf_pars_fragment>
-            #define MODE_COLOR   0
-            #define MODE_TEXTURE 1
-            #define MODE_UV      2
+            #define TYP      3
             uniform sampler2D texture_walls;
             uniform sampler2D texture_walls1;
             uniform sampler2D texture_walls2;
@@ -307,14 +225,15 @@ const vertexShader = `
             #include <logdepthbuf_fragment>
             
                 vec2 normUV = texture_scale * vec2(vUv.x * 100000., vUv.y);
-                if (mode == MODE_COLOR) {
-                    gl_FragColor = texture2D(texture_walls, normUV); // + vec2(fract(time),0.)); // gl_FragCoord.xy / vec2(1920.,1080.)
-                  //  if(dist < 200.) gl_FragColor = texture2D(texture_walls, normUV + vec2(0., fract(time)));
+                if(mode == MODE_COLOR){
+                    gl_FragColor = texture2D(texture_walls, normUV);
                 } else if (mode == MODE_TEXTURE) {
                     gl_FragColor = texture2D(texture_walls1, normUV);
-                } else {
+                } else if (mode == MODE_UV) {
                     gl_FragColor = texture2D(texture_walls2, normUV);
-                }
+                } else if (mode == TYP) {
+                    gl_FragColor = vec4(color, opacity);
+                } 
                 //if(dist < 200.) gl_FragColor = vec4(dist/200.,0.,0.,1.);
                 if(dist < 200.) gl_FragColor = mix(gl_FragColor, vec4(1.,0.,0.,1.), 0.2);
                 
@@ -322,73 +241,14 @@ const vertexShader = `
                 
             }
             `
+            
+           
             const fragmentShader_roof = `
             #include <logdepthbuf_pars_fragment>
             #define MODE_COLOR   0
             #define MODE_TEXTURE 1
             #define MODE_UV      2
-            uniform sampler2D texture_roof;
-            uniform int mode;
-            uniform float texture_scale;
-            varying vec2 vUv;
-            uniform float opacity;
-            uniform vec3 color;
-            uniform float time;
-            uniform vec3 currentPos;
-            varying float dist;
-            varying float vZbottom;
-            
-            void main(){
-            #include <logdepthbuf_fragment>
-            vec2 normUV = texture_scale * vUv * 200000.;
-            normUV.y *= 2.;
-            if(mode == MODE_TEXTURE){
-                    gl_FragColor = texture2D(texture_roof, normUV);
-                } else if (mode == MODE_UV) {
-                    gl_FragColor = vec4(fract(normUV),0.,1.);
-                } else {
-                    gl_FragColor = vec4(color, opacity);
-                }
-                gl_FragColor.r *= vZbottom / 50.;
-                
-            }
-            `
-            const fragmentShader_roof_opacity = `
-            #include <logdepthbuf_pars_fragment>
-            #define MODE_COLOR   0
-            #define MODE_TEXTURE 1
-            #define MODE_UV      2
-            uniform sampler2D texture_roof;
-            uniform int mode;
-            uniform float texture_scale;
-            varying vec2 vUv;
-            uniform float opacity;
-            uniform vec3 color;
-            uniform float time;
-            uniform vec3 currentPos;
-            varying float dist;
-            varying float vZbottom;
-            
-            void main(){
-            #include <logdepthbuf_fragment>
-            vec2 normUV = texture_scale * vUv * 200000.;
-            normUV.y *= 2.;
-            if(mode == MODE_TEXTURE){
-                    gl_FragColor = texture2D(texture_roof, normUV);
-                } else if (mode == MODE_UV) {
-                    gl_FragColor = vec4(fract(normUV),0.,1.);
-                } else {
-                    gl_FragColor = vec4(color, opacity);
-                }
-                gl_FragColor.r *= vZbottom / 50.;
-                
-            }
-            `
-            const fragmentShader_roof_texture = `
-            #include <logdepthbuf_pars_fragment>
-            #define MODE_COLOR   0
-            #define MODE_TEXTURE 1
-            #define MODE_UV      2
+            #define TYP      3
             uniform sampler2D texture_roof;
             uniform sampler2D texture_roof1;
             uniform sampler2D texture_roof2;
@@ -412,9 +272,11 @@ const vertexShader = `
                     gl_FragColor = texture2D(texture_roof, normUV);
                 } else if (mode == MODE_TEXTURE) {
                     gl_FragColor = texture2D(texture_roof1, normUV);
-                } else {
+                } else if (mode == MODE_UV) {
                     gl_FragColor = texture2D(texture_roof2, normUV);
-                }
+                } else if (mode == TYP) {
+                    gl_FragColor = vec4(color, opacity);
+                } 
                 gl_FragColor.r *= vZbottom / 50.;
                 
             }
@@ -457,54 +319,9 @@ const vertexShader = `
             texture_roof1.wrapT = THREE.RepeatWrapping;
             texture_roof2.wrapS = THREE.RepeatWrapping;
             texture_roof2.wrapT = THREE.RepeatWrapping;
-            function createMaterial(vShader, fShader, defaultColor) {
-                // Default parameters taking into account by shaders in their initial state
-                let uniforms = {
-                         // Shader mode : it's an integer between 0 and 1 : 0 = color mode, 1 = texture mode
-                    color: {type: 'c', value: defaultColor},        
-                    //texture: {type: 'sampler2D', value: defaultexture},            // Default color parameter
-                    opacity: {type: 'f', value: 1.0},   
-                                 // Scale factor on texture (float between 0.0 and 1.0)
-                    time       : {type: 'f', value: time},                      // time to create animation
-                    currentPos:  new THREE.Uniform(currentPos),                 // Current position in the trace
-                                       // Option to darken the bottom of buildings wall
-                    mode: {type: 'i', value: 0},       
-                    
-                };
-                let meshMaterial = new THREE.ShaderMaterial({
-                    uniforms: uniforms,
-                    vertexShader: vShader,
-                    fragmentShader: fShader,
-                    transparent: true,
-                    opacity: 1,
-                    side: THREE.DoubleSide
-                });
-                return meshMaterial;
-            }
-            function createMaterial_opacity(vShader, fShader, defaultColor) {
-// Default parameters taking into account by shaders in their initial state
-let uniforms = {
-         // Shader mode : it's an integer between 0 and 1 : 0 = color mode, 1 = texture mode
-    color: {type: 'c', value: defaultColor},        
-    //texture: {type: 'sampler2D', value: defaultexture},            // Default color parameter
-    opacity: {type: 'f', value: 0.5},                           // Default opacity parameter
-                 // Scale factor on texture (float between 0.0 and 1.0)
-    time       : {type: 'f', value: time},                      // time to create animation
-    currentPos:  new THREE.Uniform(currentPos),                 // Current position in the trace
-                       // Option to darken the bottom of buildings wall
-    mode: {type: 'i', value: 0},       
-    
-};
-let meshMaterial = new THREE.ShaderMaterial({
-    uniforms: uniforms,
-    vertexShader: vShader,
-    fragmentShader: fShader,
-    transparent: true,
-    opacity: 0.5,
-    side: THREE.DoubleSide
-});
-return meshMaterial;
-}
+           
+
+
 function createMaterial_texture(vShader, fShader, defaultexture) {
 // Default parameters taking into account by shaders in their initial state
 let uniforms = {
@@ -516,6 +333,7 @@ let uniforms = {
     texture_walls2: {type : 'sampler2D', value : texture_walls2},
     mode: {type: 'i', value: 0},                                // Shader mode : it's an integer between 0 and 1 : 0 = color mode, 1 = texture mode
     texture: {type: 'sampler2D', value: defaultexture},
+
     //color: {type: 'c', value: defaultColor},                    // Default color parameter
     opacity: {type: 'f', value: 1.0},                           // Default opacity parameter
     texture_scale : {type: 'f', value: 0.03},                   // Scale factor on texture (float between 0.0 and 1.0)
@@ -533,26 +351,98 @@ let meshMaterial = new THREE.ShaderMaterial({
 });
 return meshMaterial;
 }
+function createMaterial_color(vShader, fShader, defaultColor) {
+// Default parameters taking into account by shaders in their initial state
+let uniforms = {
+   
+    mode: {type: 'i', value: 3},                                // Shader mode : it's an integer between 0 and 1 : 0 = color mode, 1 = texture mode
+    //texture: {type: 'sampler2D', value: defaultexture},
+
+    color: {type: 'c', value: defaultColor},                    // Default color parameter
+    opacity: {type: 'f', value: 1},                           // Default opacity parameter
+    texture_scale : {type: 'f', value: 0.03},                   // Scale factor on texture (float between 0.0 and 1.0)
+    time       : {type: 'f', value: time},                      // time to create animation
+    currentPos:  new THREE.Uniform(currentPos),                 // Current position in the trace
+    
+};
+let meshMaterial = new THREE.ShaderMaterial({
+    uniforms: uniforms,
+    vertexShader: vShader,
+    fragmentShader: fShader,
+    transparent: true,
+    opacity: 1,
+    side: THREE.DoubleSide
+});
+return meshMaterial;
+}
+function createMaterial_opacity_wall(vShader, fShader, defaultColor) {
+// Default parameters taking into account by shaders in their initial state
+let uniforms = {
+   
+    mode: {type: 'i', value: 3},                                // Shader mode : it's an integer between 0 and 1 : 0 = color mode, 1 = texture mode
+    //texture: {type: 'sampler2D', value: defaultexture},
+
+    color: {type: 'c', value: defaultColor},                    // Default color parameter
+    opacity: {type: 'f', value: 0.5},                           // Default opacity parameter
+    texture_scale : {type: 'f', value: 0.03},                   // Scale factor on texture (float between 0.0 and 1.0)
+    time       : {type: 'f', value: time},                      // time to create animation
+    currentPos:  new THREE.Uniform(currentPos),                 // Current position in the trace
+    
+};
+let meshMaterial = new THREE.ShaderMaterial({
+    uniforms: uniforms,
+    vertexShader: vShader,
+    fragmentShader: fShader,
+    transparent: true,
+    opacity: 0.5,
+    side: THREE.DoubleSide
+});
+return meshMaterial;
+}
+function createMaterial_opacity_roof(vShader, fShader, defaultColor) {
+// Default parameters taking into account by shaders in their initial state
+let uniforms = {
+   
+    mode: {type: 'i', value: 3},                                // Shader mode : it's an integer between 0 and 1 : 0 = color mode, 1 = texture mode
+    //texture: {type: 'sampler2D', value: defaultexture},
+
+    color: {type: 'c', value: defaultColor},                    // Default color parameter
+    opacity: {type: 'f', value: 0.8},                           // Default opacity parameter
+    texture_scale : {type: 'f', value: 0.03},                   // Scale factor on texture (float between 0.0 and 1.0)
+    time       : {type: 'f', value: time},                      // time to create animation
+    currentPos:  new THREE.Uniform(currentPos),                 // Current position in the trace
+    
+};
+let meshMaterial = new THREE.ShaderMaterial({
+    uniforms: uniforms,
+    vertexShader: vShader,
+    fragmentShader: fShader,
+    transparent: true,
+    opacity: 0.8,
+    side: THREE.DoubleSide
+});
+return meshMaterial;
+}
             
-var ShadMatRoof = createMaterial(vertexShader, fragmentShader_roof, new THREE.Color(0Xffffff));
-var ShadMatRoof_ = createMaterial(vertexShader, fragmentShader_roof, new THREE.Color(0Xffffff));
-var ShadMatRoof_typ  = createMaterial(vertexShader, fragmentShader_roof, new THREE.Color(0X6c3527)); 
-var ShadMatRoof_dis  = createMaterial_opacity(vertexShader, fragmentShader_roof_opacity, new THREE.Color(0X000000));
-var ShadMatRoof3  = createMaterial_texture(vertexShader, fragmentShader_roof_texture/*, new THREE.TextureLoader().load("textures/roof.png")*/);    
-var ShadMatWalls = createMaterial(vertexShader, fragmentShader_walls, new THREE.Color(0Xffffff)); 
-var ShadMatWalls_ = createMaterial(vertexShader, fragmentShader_walls, new THREE.Color(0Xffffff));
+var ShadMatRoof = createMaterial_color(vertexShader, fragmentShader_roof, new THREE.Color(0Xa19f9f));
+var ShadMatRoof_ = createMaterial_color(vertexShader, fragmentShader_roof, new THREE.Color(0Xa19f9f));
+var ShadMatRoof_typ  = createMaterial_color(vertexShader, fragmentShader_roof, new THREE.Color(0X6c3527)); 
+var ShadMatRoof_dis  = createMaterial_opacity_roof(vertexShader, fragmentShader_roof, new THREE.Color(0X000000));
+var ShadMatRoof3  = createMaterial_texture(vertexShader, fragmentShader_roof/*, new THREE.TextureLoader().load("textures/roof.png")*/);    
+var ShadMatWalls = createMaterial_color(vertexShader, fragmentShader_walls, new THREE.Color(0Xa19f9f)); 
+var ShadMatWalls_ = createMaterial_color(vertexShader, fragmentShader_walls, new THREE.Color(0Xa19f9f));
 var ShadMatWalls_ref = new THREE.MeshLambertMaterial({color:0Xffffff, side: THREE.DoubleSide });
 
-var ShadMatWalls_typ = createMaterial(vertexShader, fragmentShader_walls, new THREE.Color(0x270906)); 
-var ShadMatWalls_dis = createMaterial_opacity(vertexShader, fragmentShader_walls_opacity, new THREE.Color(0xffffff));
-var ShadMatWalls3 = createMaterial_texture(vertexShader, fragmentShader_walls_texture/*, new THREE.TextureLoader().load("textures/wall.png")*/);
+var ShadMatWalls_typ = createMaterial_color(vertexShader, fragmentShader_walls, new THREE.Color(0x270906)); 
+var ShadMatWalls_dis = createMaterial_opacity_wall(vertexShader, fragmentShader_walls, new THREE.Color(0xffffff));
+var ShadMatWalls3 = createMaterial_texture(vertexShader, fragmentShader_walls/*, new THREE.TextureLoader().load("textures/wall.png")*/);
 
-var ShadMatEdges = createMaterial(vertexShader, fragmentShader_edges, new THREE.Color(0Xffffff));
-var ShadMatEdges_ = createMaterial(vertexShader, fragmentShader_edges, new THREE.Color(0Xffffff)); 
+var ShadMatEdges = createMaterial_color(vertexShader, fragmentShader_edges, new THREE.Color(0Xffffff));
+var ShadMatEdges_ = createMaterial_color(vertexShader, fragmentShader_edges, new THREE.Color(0Xffffff)); 
 var ShadMatEdges_dis_dash = new THREE.LineDashedMaterial({color: 0xffffff, dashSize:1,linewidth: 100, gapSize: 3});
-var ShadMatEdges_dis_cont = createMaterial_opacity(vertexShader, fragmentShader_edges, new THREE.Color(0X666666));
+var ShadMatEdges_dis_cont = createMaterial_color(vertexShader, fragmentShader_edges, new THREE.Color(0X666666));
 var ShadMatEdges_typ_dash = new THREE.LineDashedMaterial({color: 0xffffff, dashSize:1,linewidth: 100, gapSize: 3});
-var ShadMatEdges_typ_cont = createMaterial_opacity(vertexShader, fragmentShader_edges, new THREE.Color(0X666666));
+var ShadMatEdges_typ_cont = createMaterial_color(vertexShader, fragmentShader_edges, new THREE.Color(0X070b12));
 var ShadMatEdges3 = new THREE.MeshPhongMaterial({
     color: 0X6c3527,
     opacity: 0,
@@ -657,7 +547,7 @@ view.notifyChange();
                     ShadMatEdges = ShadMatEdges_typ_cont;
         }
             //ShadMatEdges= ShadMatEdges_typ_cont;
-            wfsBuildingLayer.opacity = ShadMatEdges_typ_cont.opacity;
+           // wfsBuildingLayer.opacity = ShadMatEdges_typ_cont.opacity;
 
 view.notifyChange();
   }
@@ -685,9 +575,11 @@ view.notifyChange();
         edgesArray[i].material = ShadMatEdges_dis_dash} else {
             edgesArray[i].material = ShadMatEdges_dis_cont;
         }
-        wfsBuildingLayer.opacity = ShadMatWalls_dis.opacity;
-        //wfsBuildingLayer.opacity = ShadMatRoof_dis.opacity;
-
+        // In order to set opacity value differently for wall and roof instead of using 'wfsBuildingLayer.opacity = ShadMatRoof_dis.opacity'
+        wallsArray[i].material.opacity = ShadMatWalls_dis.opacity;
+        roofArray[i].material.opacity = ShadMatRoof_dis.opacity;
+       //wfsBuildingLayer.opacity = ShadMatWalls_dis.opacity;
+       
         //i can use above line, but it doesnot work when we want to apply different opacity on different building parts or:----> following solution
         //we are using geometrylayer.js definelayerproperty('opacity') i can remove this and check weather it works. it can help for different opacity on diffeerent bui
         //building parts.
@@ -734,7 +626,6 @@ view.notifyChange();
 
     view.notifyChange();
   }
-  
 });
 
 /*function saveVibes(){
@@ -756,35 +647,9 @@ view.notifyChange();
       //  itowns.FILE.saveAs(blob, mesh.materialLibraries[0].substring(0,mesh.materialLibraries[0].length -4) + ".vibes");
     }  */  
  
-/*menuGlobe.gui.add(style, 'Transparent').onChange(() => {
-    for (var i = 0; i < wallsArray.length; ++i){
-        wallsArray[i].material = ShadMatWalls2;
-        roofArray[i].material = ShadMatRoof2;
-        edgesArray[i].material = ShadMatEdges2;
-        //wallsArray[i].material.color = new THREE.Color(0xc50202);
-          //  console.log('ress', wallsArray[i]);
-            }
-            ShadMatRoof = ShadMatRoof2;
-            ShadMatWalls = ShadMatWalls2;
-            ShadMatEdges = ShadMatEdges2;
-    view.notifyChange();
-    });*/
 
     
-    /*menuGlobe.gui.add(style, 'Texture').onChange(() => {
-    for (var i = 0; i < wallsArray.length; ++i){
-        wallsArray[i].material = ShadMatWalls3;
-        roofArray[i].material = ShadMatRoof3;
-        edgesArray[i].material = ShadMatEdges3;
-        //wallsArray[i].material.color = new THREE.Color(0xc50202);
-          //  console.log('ress', wallsArray[i]);
-            }
-            ShadMatRoof = ShadMatRoof3;
-            ShadMatWalls = ShadMatWalls3;
-            ShadMatEdges = ShadMatEdges3;
-
-    view.notifyChange();
-    });*/
+    
     
 var styleModification_def = menuGlobe.gui.addFolder('Default Style Modification')
 //in order to hide this when the first time scene is loaded and no style is selected

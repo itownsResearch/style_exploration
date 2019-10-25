@@ -118,7 +118,7 @@
                     color: () => new THREE.Color(0xffffff),
                     
                     batchId: function (property, featureId) { return featureId; },
-                     altitude: altitudeBuildings,
+                    altitude: altitudeBuildings,
                     extrude: extrudeBuildings,
                     attributes: {
                         color: { type: Uint8Array, value: (prop, id, extruded) => { return new THREE.Color(extruded ? 0xffffff : 0x888888);}, itemSize:3, normalized:true },
@@ -514,7 +514,7 @@ let uniforms = {
     texture_walls: {type : 'sampler2D', value : texture_walls}, // Texture for modelisation of walls
     texture_walls1: {type : 'sampler2D', value : texture_walls1},
     texture_walls2: {type : 'sampler2D', value : texture_walls2},
-    mode: {type: 'i', value: 0},                                // Shader mode : it's an integer between 0 and 1 : 0 = color mode, 1 = texture mode
+    mode: {type: 'i', value: 0}, 
     texture: {type: 'sampler2D', value: defaultexture},
     //color: {type: 'c', value: defaultColor},                    // Default color parameter
     opacity: {type: 'f', value: 1.0},                           // Default opacity parameter
@@ -616,10 +616,8 @@ var a = styles.onChange(() => {
         }
             ShadMatRoof = ShadMatRoof_;  
             ShadMatEdges =  ShadMatEdges_;  
-
 view.notifyChange();
   }
-  
     
  else if (params.styles==='Typical'){
     //var xxx = styleModification.addFolder('xxx');
