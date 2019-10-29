@@ -23,11 +23,36 @@
 
         
         <script type="text/javascript">
-        
-            var THREE = itowns.THREE;
-            
-            // Define initial camera position
-            var positionOnGlobe = { longitude: 2.42345, latitude: 48.84477, altitude: 1000 };
+  
+         var THREE = itowns.THREE;
+          
+
+     
+ // predefined center of the scene (initial camera position)
+var  positionOnGlobe = { longitude: 2.418159, latitude: 48.846182, altitude: 1000 }
+var time = 5500;
+var pathTravel = [];
+var promises = [];
+//camera position based on user's geolocation
+var FizzyText = function() {
+
+    this.YourPosition = function travel() {
+  
+    navigator.geolocation.getCurrentPosition(function(position) {
+    this.positionOnGlobe = { longitude: /*2.423554*/position.coords.longitude, latitude: /*48.845759,*/ position.coords.latitude, altitude: 1000 };
+    pathTravel.push({ coord: new itowns.Coordinates('EPSG:4326', positionOnGlobe.longitude, positionOnGlobe.latitude ), range: 1000, time: time * 0.2 });
+
+    })
+
+    var camera = view.camera.camera3D;
+    itowns.CameraUtils.sequenceAnimationsToLookAtTarget(view, camera, pathTravel);
+
+}
+  
+};
+//pathTravel.push({ range: 1393, time: time * 0.2, tilt: 7.59, heading: -110.9 });
+//pathTravel.push({ tilt: 8, time: time * 0.2 });
+
             var meshes = [];
             //to create global variables to be accessed outside the 'modifyshader' function for the purpose of defining new style 
             var wallsArray = [];
@@ -41,13 +66,14 @@
             var options = {segments:128};  // We specify a high resolution grid (Each tile is 128* 128 * 2 triangles)
             var view = new itowns.GlobeView(viewerDiv, positionOnGlobe, { options });
             setupLoadingScreen(viewerDiv, view);
+            
             var menuGlobe = new GuiTools('menuDiv', view);
             // Listen for globe full initialisation event
-            view.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function () {
+            view.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function init() {
                 // eslint-disable-next-line no-console
                 console.info('Globe initialized');
                 view.controls.setTilt(45);
-                // console.log(view);
+               
             });
             var d = new debug.Debug(view, menuGlobe.gui);
             debug.createTileDebugUI(menuGlobe.gui, view, view.tileLayer, d);
@@ -132,7 +158,6 @@
             });
             view.addLayer(wfsBuildingLayer);//.then(layer => delete layer.opacity);
             
-           
 function modifyShader(mesh) {
     //$(styleModification.domElement).attr("hidden", true);
 
@@ -159,9 +184,11 @@ if(roof) {
    
     edges.computeLineDistances(); //in order to enable dash style on the new loaded tiles
     edges.material = ShadMatEdges;//in order to enable  style on the new loaded tiles
+
+
 }
 
-let style_vv = { "styles" : [] };
+/*let style_vv = { "styles" : [] };
         style_vv.styles.push({
             "name"     : "Discreet",
             "opacity"     : ShadMatWalls_dis.uniforms.opacity.value 
@@ -171,7 +198,7 @@ let style_vv = { "styles" : [] };
             "color"     : ShadMatWalls_typ.uniforms.color.value
 
         })
-        console.log(Object.values(style_vv));
+        console.log(Object.values(style_vv));*/
     //alert( JSON.stringify(style_vv) );
 
 };
@@ -298,7 +325,7 @@ const vertexShader = `
         //shader implementation
            
             
-            let time = 0;
+//let time = 0;
             let currentPos = new THREE.Vector3();
             let texture_walls =   new THREE.TextureLoader().load("textures/wall.png");
             let texture_walls1 = new THREE.TextureLoader().load("textures/stone-wall.jpg");
@@ -448,35 +475,16 @@ var ShadMatEdges3 = new THREE.MeshPhongMaterial({
     opacity: 0,
     transparent: true,
   });
- //createMaterial_texture(vertexShader, fragmentShader_edges, new THREE.Color(0X8ede83));
-       
-//var ShadMatRoof = ShadMatRoof0;
 
-
- /*const style = {
-            default_style: true,
-            Color: false,
-            Transparent: false,
-            Texture: false,
-            };   */   
+  var text = new FizzyText();
+  
+  var nav = menuGlobe.gui.addFolder('Navigation');
+  nav.add(text, 'YourPosition');
+  
             var params = {
                styles: 'default',
             };  
-            //menuGlobe.gui.add(style, 'styles', ['default_style', 'color', 'transparent', 'texture' ] );
-/*menuGlobe.gui.add(styles, 'color').onChange(() => {
-    // ShadMatwalls  = createMaterial(vertexShader, fragmentShader_roof, new THREE.Color(0X5ae8ce));
-    for (var i = 0; i < wallsArray.length; ++i){
-        wallsArray[i].material = ShadMatWalls1;
-        roofArray[i].material = ShadMatRoof1;
-        edgesArray[i].material = ShadMatEdges1;
-        //wallsArray[i].material.color = new THREE.Color(0xc50202);
-           // console.log('ress', wallsArray[i]);
-            }
-            ShadMatRoof = ShadMatRoof1;
-            ShadMatWalls = ShadMatWalls1;
-            ShadMatEdges= ShadMatEdges1;
-view.notifyChange();
-});*/
+            
 var styles = menuGlobe.gui.add(params, 'styles', [ "default", "Typical", "Discreet", "Photorealistic"]).name('styles').listen();
 var a = styles.onChange(() => {
     if (params.styles==='default'){
@@ -500,7 +508,7 @@ var a = styles.onChange(() => {
             ShadMatWalls = ShadMatWalls_;  
             ShadMatRoof = ShadMatRoof_;  
             ShadMatEdges =  ShadMatEdges_;  
-
+            
 view.notifyChange();
   }
   
@@ -531,6 +539,7 @@ view.notifyChange();
 
         wallsArray[i].material = ShadMatWalls_typ;
         roofArray[i].material = ShadMatRoof_typ;
+        
         //edgesArray[i].computeLineDistances();
         //edgesArray[i].geometry.computeLineDistances();
         if (edgeParams_typ.edgeStyles_typ==='Dashed'){
@@ -542,6 +551,9 @@ view.notifyChange();
             }
             ShadMatRoof = ShadMatRoof_typ;
             ShadMatWalls = ShadMatWalls_typ;
+           
+            
+            
             if (edgeParams_typ.edgeStyles_typ==='Dashed'){
                 ShadMatEdges = ShadMatEdges_typ_dash} else {
                     ShadMatEdges = ShadMatEdges_typ_cont;
@@ -576,9 +588,9 @@ view.notifyChange();
             edgesArray[i].material = ShadMatEdges_dis_cont;
         }
         // In order to set opacity value differently for wall and roof instead of using 'wfsBuildingLayer.opacity = ShadMatRoof_dis.opacity'
-        wallsArray[i].material.opacity = ShadMatWalls_dis.opacity;
-        roofArray[i].material.opacity = ShadMatRoof_dis.opacity;
-       //wfsBuildingLayer.opacity = ShadMatWalls_dis.opacity;
+        //wallsArray[i].material.opacity = ShadMatWalls_dis.opacity;
+        //roofArray[i].material.opacity = ShadMatRoof_dis.opacity;
+       wfsBuildingLayer.opacity = ShadMatWalls_dis.opacity;
        
         //i can use above line, but it doesnot work when we want to apply different opacity on different building parts or:----> following solution
         //we are using geometrylayer.js definelayerproperty('opacity') i can remove this and check weather it works. it can help for different opacity on diffeerent bui
@@ -628,28 +640,7 @@ view.notifyChange();
   }
 });
 
-/*function saveVibes(){
-    //console.log("sauvegarde");
-    let vibes = { "styles" : [] };
-    for (var i = 0; i < wallsArray.length; ++i) {
-        vibes.styles.push({
-            "name"     : Photorealistic
-           // "opacity"  : mesh.children[i].material.opacity,
-            //"color"    : mesh.children[i].material.color.getHex(),
-           // "emissive" : mesh.children[i].material.emissive.getHex(),
-            //"specular" : mesh.children[i].material.specular.getHex(),
-           // "shininess": mesh.children[i].material.shininess
-        })
-    }
-    console.log(vibes);
 
-    //let blob = new Blob([JSON.stringify(vibes)], {type: "text/plain;charset=utf-8"});
-      //  itowns.FILE.saveAs(blob, mesh.materialLibraries[0].substring(0,mesh.materialLibraries[0].length -4) + ".vibes");
-    }  */  
- 
-
-    
-    
     
 var styleModification_def = menuGlobe.gui.addFolder('Default Style Modification')
 //in order to hide this when the first time scene is loaded and no style is selected
@@ -746,9 +737,22 @@ $(styleModification_typ.domElement).attr("hidden", true);
     var wallOpacity_typ = wall_typ.add({Opacity : 1}, 'Opacity').min(0).max(1).onChange(
       function updateOpacityRoof(value){
             ShadMatWalls_typ.uniforms.opacity.value = value;
+            
             view.notifyChange(true);
+           
       }
+      
     );
+    
+  
+      
+
+
+  
+  
+
+
+    
     var wallOpacity_dis = wall_dis.add({Opacity : 0.5}, 'Opacity').min(0).max(1).onChange(
       function updateOpacityRoof(value){
             ShadMatWalls_dis.uniforms.opacity.value = value;
@@ -971,6 +975,52 @@ view.notifyChange();
 view.notifyChange();
  }
  });
+
+
+//calling the function which gets users position and reset the camera position
+
+  
+
+
+ /*
+        var vibes = { "styles" : [] };
+        window.onload = function toVibes(){
+        vibes.styles.push({
+            "name"     : "Discreet",
+            "opacity"     : ShadMatWalls_dis.uniforms.opacity.value 
+            },
+            {
+            "name"     : "Typical",
+            "color"     : ShadMatWalls_typ.uniforms.color.value
+            })
+        }
+var save = function(){
+    
+   this.SaveStyle = function(){
+    let blob = new Blob([JSON.stringify(vibes)], {type: "text/plain;charset=utf-8"});
+        itowns.FILE.saveAs(blob, mesh.materialLibraries[0].substring(0,mesh.materialLibraries[0].length -4) + ".vibes");
+   }
+   // console.log(vibes);
+   
+
+    //let blob = new Blob([JSON.stringify(vibes)], {type: "text/plain;charset=utf-8"});
+      //  itowns.FILE.saveAs(blob, mesh.materialLibraries[0].substring(0,mesh.materialLibraries[0].length -4) + ".vibes");
+    }  
+    var ss = new save();
+  
+  var mm = menuGlobe.gui.addFolder('Save Style');
+  mm.add(ss, 'SaveStyle'); */
+ 
+//calling the function which downloads the created style
+
+/*window.onload = function() {
+  var ss = new saveStyle();
+  
+  var nav = menuGlobe.gui.addFolder('save style');
+  nav.add(ss, 'SaveStyle');
+};*/
+
+
 /*var vv = 4;
 console.log(vv);  
 var updatedvv = function (){
