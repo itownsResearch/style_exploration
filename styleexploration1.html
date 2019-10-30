@@ -58,7 +58,6 @@ var FizzyText = function() {
             var wallsArray = [];
             var roofArray = [];
             var edgesArray = [];
-            var styleArray= [];
             var scaler;
             // `viewerDiv` will contain iTowns' rendering area (`<canvas>`)
             var viewerDiv = document.getElementById('viewerDiv');
@@ -85,15 +84,15 @@ var FizzyText = function() {
                 var layer = new itowns.ColorLayer(config.id, config);
                 view.addLayer(layer).then(menuGlobe.addLayerGUI.bind(menuGlobe));
             }
-            itowns.Fetcher.json('./layers/JSONLayers/Ortho.json').then(createWMTSSourceFromConfig).then(addColorLayerFromConfig);
-            itowns.Fetcher.json('./layers/JSONLayers/DARK.json').then(createWMTSSourceFromConfig).then(addColorLayerFromConfig);
+            //itowns.Fetcher.json('./layers/JSONLayers/Ortho.json').then(createWMTSSourceFromConfig).then(addColorLayerFromConfig);
+            //itowns.Fetcher.json('./layers/JSONLayers/DARK.json').then(createWMTSSourceFromConfig).then(addColorLayerFromConfig);
             
             function addElevationLayerFromConfig(config) {
                 config.source = new itowns.WMTSSource(config.source);
                 var layer = new itowns.ElevationLayer(config.id, config);
                 view.addLayer(layer).then(menuGlobe.addLayerGUI.bind(menuGlobe));
             }
-            itowns.Fetcher.json('./layers/JSONLayers/WORLD_DTM.json').then(addElevationLayerFromConfig);
+           itowns.Fetcher.json('./layers/JSONLayers/WORLD_DTM.json').then(addElevationLayerFromConfig);
             itowns.Fetcher.json('./layers/JSONLayers/IGN_MNT_HIGHRES.json').then(addElevationLayerFromConfig);
             ////////////building
             var color = new itowns.THREE.Color();
@@ -157,7 +156,6 @@ var FizzyText = function() {
                 source: wfsBuildingSource
             });
             view.addLayer(wfsBuildingLayer);//.then(layer => delete layer.opacity);
-            
 function modifyShader(mesh) {
     //$(styleModification.domElement).attr("hidden", true);
 
@@ -188,17 +186,8 @@ if(roof) {
 
 }
 
-/*let style_vv = { "styles" : [] };
-        style_vv.styles.push({
-            "name"     : "Discreet",
-            "opacity"     : ShadMatWalls_dis.uniforms.opacity.value 
-        },
-        {
-            "name"     : "Typical",
-            "color"     : ShadMatWalls_typ.uniforms.color.value
 
-        })
-        console.log(Object.values(style_vv));*/
+//console.log(Object.values(style_vv));
     //alert( JSON.stringify(style_vv) );
 
 };
@@ -855,7 +844,9 @@ view.notifyChange();
                edgeStyles_typ: 'Select',
             };  
     var edgeStyles_typ = edge_typ.add(edgeParams_typ, 'edgeStyles_typ', ["Continuous", "Dashed"]).name('edge Styles').listen();
-
+//to be used for saving and downloading the color of edge based on the edge style
+var EdgeColorTyp = ShadMatEdges_typ_cont.uniforms.color.value;
+var DashSizeTyp = "null";
     edgeStyles_typ.onChange(() => {
     if (edgeParams_typ.edgeStyles_typ==='Continuous'){
     for (var i = 0; i < wallsArray.length; ++i){
@@ -870,7 +861,8 @@ view.notifyChange();
             }
            
             ShadMatEdges =  ShadMatEdges_typ_cont;  
-
+            EdgeColorTyp = ShadMatEdges_typ_cont.uniforms.color.value;
+          
 view.notifyChange();
   }
     
@@ -893,7 +885,8 @@ view.notifyChange();
            // console.log('ress', wallsArray[i]);
             }
             ShadMatEdges = ShadMatEdges_typ_dash;
-            
+            EdgeColorTyp = ShadMatEdges_typ_dash.color;
+            DashSizeTyp = ShadMatEdges_typ_dash.dashSize;
 
 
             
@@ -932,10 +925,12 @@ view.notifyChange();
       }
     ); 
     var shadingParams = {
-               shadingStyles: 'without',
+               shadingStyles: '',
             };  
     var shadingStyles = shading.add(shadingParams, 'shadingStyles', ["without", "with"]).name('shadingStyles')
 .listen();
+/////it is used in the saving style parameters with or withour shading for the default style
+var Default_wall_color = 0;  
 
 shadingStyles.onChange(() => {
     if (shadingParams.shadingStyles==='without'){
@@ -952,12 +947,11 @@ shadingStyles.onChange(() => {
             ShadMatWalls = ShadMatWalls_;  
             ShadMatRoof = ShadMatRoof_;  
             ShadMatEdges =  ShadMatEdges_;  
-       
+            Default_wall_color = ShadMatWalls_.uniforms.color.value;
             
 
 view.notifyChange();
   }
-    
  else if (shadingParams.shadingStyles==='with'){
     for (var i = 0; i < wallsArray.length; ++i){
         
@@ -972,11 +966,53 @@ view.notifyChange();
         ShadMatWalls = ShadMatWalls_ref;  
         ShadMatRoof = ShadMatRoof_;  
         ShadMatEdges =  ShadMatEdges_;  
+        Default_wall_color = ShadMatWalls_ref.color;
 view.notifyChange();
  }
  });
 
 
+ //save and download style
+var FizzyTextt = function() {
+
+    this.SaveStyles = function ssss() {
+
+
+        var stylevv = { "stylesvv" : [] };
+console.log(stylevv);
+        stylevv.stylesvv.push(
+            {"name": "Default", "WallColor"  : Default_wall_color, "RoofColor":ShadMatRoof_.uniforms.color.value, "EdgeColor":ShadMatEdges_.uniforms.color.value},
+            {"name": "Typical", "WallColor"  : ShadMatWalls_typ.uniforms.color.value, "RoofColor":ShadMatRoof_typ.uniforms.color.value, "EdgeStyle": edgeParams_typ.edgeStyles_typ, "EdgeColor":EdgeColorTyp, "DashSize":DashSizeTyp },
+            {"name": "Discreet", "opacity"  : ShadMatWalls_typ.uniforms.opacity.value, "color":ShadMatWalls_typ.uniforms.color.value},
+            {"name": "Photorealistic", "opacity"  : ShadMatWalls_typ.uniforms.opacity.value, "color":ShadMatWalls_typ.uniforms.color.value.r}
+        )
+        var saveData = (function () {
+    var a = document.createElement("a");
+    document.body.appendChild(a);
+    a.style = "display: none";
+    return function (stylevv, fileName) {
+        let blob = new Blob([JSON.stringify(stylevv)], {type: "text/plain;charset=utf-8"}),
+            url = window.URL.createObjectURL(blob);
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        window.URL.revokeObjectURL(url);
+    };
+}());
+
+    fileName = "style_file.json";
+
+saveData(stylevv, fileName);
+       
+        
+
+    }
+
+};
+ var textt = new FizzyTextt();
+  
+  var navv = menuGlobe.gui.addFolder('Save Styles');
+  navv.add(textt, 'SaveStyles');
 //calling the function which gets users position and reset the camera position
 
   
@@ -1057,7 +1093,10 @@ updatedvv();
 
   // alert( JSON.stringify(style_spec) );
 
-   
+  
+ 
+
+    
 
 
         </script>
