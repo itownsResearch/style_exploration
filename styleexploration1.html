@@ -464,7 +464,7 @@ var ShadMatEdges3 = new THREE.MeshPhongMaterial({
     opacity: 0,
     transparent: true,
   });
-
+//calling the function which gets user's current geographical location and sets camera position based on user position 
   var text = new FizzyText();
   
   var nav = menuGlobe.gui.addFolder('Navigation');
@@ -473,7 +473,7 @@ var ShadMatEdges3 = new THREE.MeshPhongMaterial({
             var params = {
                styles: 'default',
             };  
-            
+ ////////////////Style exploration
 var styles = menuGlobe.gui.add(params, 'styles', [ "default", "Typical", "Discreet", "Photorealistic"]).name('styles').listen();
 var a = styles.onChange(() => {
     if (params.styles==='default'){
@@ -544,7 +544,9 @@ view.notifyChange();
             
             
             if (edgeParams_typ.edgeStyles_typ==='Dashed'){
-                ShadMatEdges = ShadMatEdges_typ_dash} else {
+                ShadMatEdges = ShadMatEdges_typ_dash;
+
+                } else if (edgeParams_typ.edgeStyles_typ==='Continuous'){
                     ShadMatEdges = ShadMatEdges_typ_cont;
         }
             //ShadMatEdges= ShadMatEdges_typ_cont;
@@ -734,14 +736,6 @@ $(styleModification_typ.domElement).attr("hidden", true);
     );
     
   
-      
-
-
-  
-  
-
-
-    
     var wallOpacity_dis = wall_dis.add({Opacity : 0.5}, 'Opacity').min(0).max(1).onChange(
       function updateOpacityRoof(value){
             ShadMatWalls_dis.uniforms.opacity.value = value;
@@ -762,12 +756,16 @@ $(styleModification_typ.domElement).attr("hidden", true);
             view.notifyChange(true);
       }
     );
+
+    //sedge style
     var edgeParams_dis = {
-               edgeStyles_dis: 'Please Select One Style',
+               edgeStyles_dis: 'Continuous',
             };  
             
     var edgeStyles_dis = edge_dis.add(edgeParams_dis, 'edgeStyles_dis', ["Continuous", "Dashed"]).name('edgeStyles').listen();
-
+    var EdgeColorDis;
+var DashSizeDis;
+var GapSizeDis;
     edgeStyles_dis.onChange(() => {
     if (edgeParams_dis.edgeStyles_dis==='Continuous'){
     for (var i = 0; i < wallsArray.length; ++i){
@@ -782,7 +780,9 @@ $(styleModification_typ.domElement).attr("hidden", true);
             }
            
             ShadMatEdges =  ShadMatEdges_dis_cont;  
-
+            EdgeColorDis = ShadMatEdges_dis_cont.uniforms.color.value;
+        DashSizeDis = "null";
+            GapSizeDis = "null";
 view.notifyChange();
   }
     
@@ -802,7 +802,9 @@ view.notifyChange();
            // console.log('ress', wallsArray[i]);
             }
             ShadMatEdges = ShadMatEdges_dis_dash;
-            
+            EdgeColorDis = ShadMatEdges_dis_dash.color;
+            DashSizeDis = ShadMatEdges_dis_dash.dashSize;
+           GapSizeDis = ShadMatEdges_dis_dash.gapSize;
             
 view.notifyChange();
  }
@@ -839,14 +841,15 @@ view.notifyChange();
       }
     ); 
 
-    //////////
+    //////////edge styles for typical style
     var edgeParams_typ = {
-               edgeStyles_typ: 'Select',
+               edgeStyles_typ: 'continuous',
             };  
     var edgeStyles_typ = edge_typ.add(edgeParams_typ, 'edgeStyles_typ', ["Continuous", "Dashed"]).name('edge Styles').listen();
 //to be used for saving and downloading the color of edge based on the edge style
-var EdgeColorTyp = ShadMatEdges_typ_cont.uniforms.color.value;
-var DashSizeTyp = "null";
+var EdgeColorTyp;
+var DashSizeTyp;
+var GapSizeTyp;
     edgeStyles_typ.onChange(() => {
     if (edgeParams_typ.edgeStyles_typ==='Continuous'){
     for (var i = 0; i < wallsArray.length; ++i){
@@ -856,13 +859,15 @@ var DashSizeTyp = "null";
         $(edgeGapSize_typ.domElement).attr("hidden", true);
         $(edgeDashColor_typ.domElement).attr("hidden", true);
         edgesArray[i].material = ShadMatEdges_typ_cont;
+        
         //wallsArray[i].material.color = new THREE.Color(0xc50202);
            // console.log('ress', wallsArray[i]);
             }
            
             ShadMatEdges =  ShadMatEdges_typ_cont;  
-            EdgeColorTyp = ShadMatEdges_typ_cont.uniforms.color.value;
-          
+           EdgeColorTyp = ShadMatEdges_typ_cont.uniforms.color.value;
+        DashSizeTyp = "null";
+            GapSizeTyp = "null";
 view.notifyChange();
   }
     
@@ -877,6 +882,7 @@ view.notifyChange();
         
         //edgesArray[i].geometry.computeLineDistances();
         edgesArray[i].material = ShadMatEdges_typ_dash; 
+       
         //ShadMatEdges_typ_dash.edgeDashSize_typ=edgeDashSize_typ;
             //ShadMatEdges_typ_dash.edgeGapSize_typ=edgeGapSize_typ;
            // ShadMatEdges_typ_dash.edgeDashColor_typ=edgeDashColor_typ;
@@ -887,12 +893,17 @@ view.notifyChange();
             ShadMatEdges = ShadMatEdges_typ_dash;
             EdgeColorTyp = ShadMatEdges_typ_dash.color;
             DashSizeTyp = ShadMatEdges_typ_dash.dashSize;
+           GapSizeTyp = ShadMatEdges_typ_dash.gapSize;
 
 
             
 view.notifyChange();
  }
  });
+
+
+
+
    var edgeColor_typ = edge_typ.addColor({Color : ShadMatEdges_typ_cont.uniforms.color.value.getHex()}, 'Color').onChange(
       function updateColorEdges(value){
         ShadMatEdges_typ_cont.uniforms.color.value = new THREE.Color(value);
@@ -906,14 +917,14 @@ view.notifyChange();
       }
     );
     var edgeDashSize_typ = edge_typ.add({DashSize : 1.0}, 'DashSize').min(1).max(10).step(1).onChange(
-      function updateOpacityRoof(value){
+      function updateDashSizeTyp(value){
             ShadMatEdges_typ_dash.dashSize = value;
             view.notifyChange(true);
       }
     );
     
    var edgeGapSize_typ = edge_typ.add({GapSize : 1.0}, 'GapSize').min(1).max(10).step(1).onChange(
-      function updateOpacityRoof(value){
+      function updateGapSizeTyp(value){
         ShadMatEdges_typ_dash.gapSize = value;
             view.notifyChange(true);
       }
@@ -925,12 +936,12 @@ view.notifyChange();
       }
     ); 
     var shadingParams = {
-               shadingStyles: '',
+               shadingStyles: 'Without',
             };  
     var shadingStyles = shading.add(shadingParams, 'shadingStyles', ["without", "with"]).name('shadingStyles')
 .listen();
 /////it is used in the saving style parameters with or withour shading for the default style
-var Default_wall_color = 0;  
+var Default_wall_color = ShadMatWalls_.uniforms.color.value;  
 
 shadingStyles.onChange(() => {
     if (shadingParams.shadingStyles==='without'){
@@ -970,8 +981,9 @@ view.notifyChange();
 view.notifyChange();
  }
  });
+ 
 
-
+ 
  //save and download style
 var FizzyTextt = function() {
 
@@ -982,9 +994,9 @@ var FizzyTextt = function() {
 console.log(stylevv);
         stylevv.stylesvv.push(
             {"name": "Default", "WallColor"  : Default_wall_color, "RoofColor":ShadMatRoof_.uniforms.color.value, "EdgeColor":ShadMatEdges_.uniforms.color.value},
-            {"name": "Typical", "WallColor"  : ShadMatWalls_typ.uniforms.color.value, "RoofColor":ShadMatRoof_typ.uniforms.color.value, "EdgeStyle": edgeParams_typ.edgeStyles_typ, "EdgeColor":EdgeColorTyp, "DashSize":DashSizeTyp },
-            {"name": "Discreet", "opacity"  : ShadMatWalls_typ.uniforms.opacity.value, "color":ShadMatWalls_typ.uniforms.color.value},
-            {"name": "Photorealistic", "opacity"  : ShadMatWalls_typ.uniforms.opacity.value, "color":ShadMatWalls_typ.uniforms.color.value.r}
+            {"name": "Typical", "WallColor"  : ShadMatWalls_typ.uniforms.color.value, "RoofColor":ShadMatRoof_typ.uniforms.color.value, "EdgeStyle": edgeParams_typ.edgeStyles_typ, "EdgeColor":EdgeColorTyp, "DashSizee":DashSizeTyp, "GapSizee": GapSizeTyp},
+            {"name": "Discreet", "WallColor"  : ShadMatWalls_dis.uniforms.color.value, "RoofColor":ShadMatRoof_dis.uniforms.color.value, "EdgeStyle": edgeParams_dis.edgeStyles_dis, "EdgeColor":EdgeColorDis, "DashSizee":DashSizeDis, "GapSizee": GapSizeDis},
+            {"name": "Photorealistic", "WallTextureMode"  : ShadMatWalls3.uniforms.mode.value, "WallTextureScale":ShadMatWalls3.uniforms.texture_scale.value, "RoofTextureMode"  : ShadMatRoof3.uniforms.mode.value, "RoofTextureScale":ShadMatRoof3.uniforms.texture_scale.value}
         )
         var saveData = (function () {
     var a = document.createElement("a");
@@ -1009,89 +1021,22 @@ saveData(stylevv, fileName);
     }
 
 };
+//calling the function which save and downloads style
  var textt = new FizzyTextt();
   
   var navv = menuGlobe.gui.addFolder('Save Styles');
   navv.add(textt, 'SaveStyles');
-//calling the function which gets users position and reset the camera position
+
 
   
 
 
- /*
-        var vibes = { "styles" : [] };
-        window.onload = function toVibes(){
-        vibes.styles.push({
-            "name"     : "Discreet",
-            "opacity"     : ShadMatWalls_dis.uniforms.opacity.value 
-            },
-            {
-            "name"     : "Typical",
-            "color"     : ShadMatWalls_typ.uniforms.color.value
-            })
-        }
-var save = function(){
-    
-   this.SaveStyle = function(){
-    let blob = new Blob([JSON.stringify(vibes)], {type: "text/plain;charset=utf-8"});
-        itowns.FILE.saveAs(blob, mesh.materialLibraries[0].substring(0,mesh.materialLibraries[0].length -4) + ".vibes");
-   }
-   // console.log(vibes);
-   
 
-    //let blob = new Blob([JSON.stringify(vibes)], {type: "text/plain;charset=utf-8"});
-      //  itowns.FILE.saveAs(blob, mesh.materialLibraries[0].substring(0,mesh.materialLibraries[0].length -4) + ".vibes");
-    }  
-    var ss = new save();
-  
-  var mm = menuGlobe.gui.addFolder('Save Style');
-  mm.add(ss, 'SaveStyle'); */
- 
-//calling the function which downloads the created style
-
-/*window.onload = function() {
-  var ss = new saveStyle();
-  
-  var nav = menuGlobe.gui.addFolder('save style');
-  nav.add(ss, 'SaveStyle');
-};*/
-
-
-/*var vv = 4;
-console.log(vv);  
-var updatedvv = function (){
-    
-
-        vv = ShadMatWalls3.uniforms.mode.value
-        console.log(vv);   
-        };
  
 
-updatedvv();
-        console.log(vv);          
-   
-   */
 
 
 
-    //$(styleModification.domElement).attr("hidden", true);
-
-
-   
-
-/*for (i in styless.discreet) {
-    myObj.rights[0] = function updateRoofMode(value){
-        ShadMatRoof3.uniforms.mode.value = value;
-            view.notifyChange(true);
-      };
-    console.log(x);
-}*/
-
-
-
-
-
-  // alert( JSON.stringify(style_spec) );
 
   
  
