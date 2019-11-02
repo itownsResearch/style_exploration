@@ -84,8 +84,8 @@ var FizzyText = function() {
                 var layer = new itowns.ColorLayer(config.id, config);
                 view.addLayer(layer).then(menuGlobe.addLayerGUI.bind(menuGlobe));
             }
-            //itowns.Fetcher.json('./layers/JSONLayers/Ortho.json').then(createWMTSSourceFromConfig).then(addColorLayerFromConfig);
-            //itowns.Fetcher.json('./layers/JSONLayers/DARK.json').then(createWMTSSourceFromConfig).then(addColorLayerFromConfig);
+            itowns.Fetcher.json('./layers/JSONLayers/Ortho.json').then(createWMTSSourceFromConfig).then(addColorLayerFromConfig);
+            itowns.Fetcher.json('./layers/JSONLayers/DARK.json').then(createWMTSSourceFromConfig).then(addColorLayerFromConfig);
             
             function addElevationLayerFromConfig(config) {
                 config.source = new itowns.WMTSSource(config.source);
@@ -537,11 +537,12 @@ view.notifyChange();
         } //console.log(edgesArray[i]);
         //wallsArray[i].material.color = new THREE.Color(0xc50202);
            // console.log('ress', wallsArray[i]);
+           
             }
             ShadMatRoof = ShadMatRoof_typ;
             ShadMatWalls = ShadMatWalls_typ;
            
-            
+            wfsBuildingLayer.opacity = ShadMatWalls_typ.opacity;
             
             if (edgeParams_typ.edgeStyles_typ==='Dashed'){
                 ShadMatEdges = ShadMatEdges_typ_dash;
@@ -581,7 +582,6 @@ view.notifyChange();
         // In order to set opacity value differently for wall and roof instead of using 'wfsBuildingLayer.opacity = ShadMatRoof_dis.opacity'
         //wallsArray[i].material.opacity = ShadMatWalls_dis.opacity;
         //roofArray[i].material.opacity = ShadMatRoof_dis.opacity;
-       wfsBuildingLayer.opacity = ShadMatWalls_dis.opacity;
        
         //i can use above line, but it doesnot work when we want to apply different opacity on different building parts or:----> following solution
         //we are using geometrylayer.js definelayerproperty('opacity') i can remove this and check weather it works. it can help for different opacity on diffeerent bui
@@ -592,6 +592,8 @@ view.notifyChange();
             }
             ShadMatRoof = ShadMatRoof_dis;
             ShadMatWalls = ShadMatWalls_dis;
+            wfsBuildingLayer.opacity = ShadMatWalls_dis.opacity;
+
             //ShadMatWalls.transparent = true;
             if (edgeParams_dis.edgeStyles_dis==='Dashed'){
                 ShadMatEdges = ShadMatEdges_dis_dash} else {
@@ -692,14 +694,14 @@ $(styleModification_typ.domElement).attr("hidden", true);
       }
     );
     
-   var roofOpacity_typ = roof_typ.add({Opacity : 1}, 'Opacity').min(0).max(1).onChange(
+   var roofOpacity_typ = roof_typ.add({Opacity : 1}, 'Opacity').min(0).max(1).step(0.1).onChange(
       function updateOpacityRoof(value){
             ShadMatRoof_typ.uniforms.opacity.value = value;
             //wfsBuildingLayer.opacity = value;
             view.notifyChange(true);
       }
     );
-    var roofOpacity_dis = roof_dis.add({Opacity : 0.5}, 'Opacity').min(0).max(1).onChange(
+    var roofOpacity_dis = roof_dis.add({Opacity : 0.8}, 'Opacity').min(0).max(1).step(0.1).onChange(
       function updateOpacityRoof(value){
             ShadMatRoof_dis.uniforms.opacity.value = value;
             //wfsBuildingLayer.opacity = value;
@@ -725,7 +727,7 @@ $(styleModification_typ.domElement).attr("hidden", true);
             view.notifyChange(true);
       }
     ); 
-    var wallOpacity_typ = wall_typ.add({Opacity : 1}, 'Opacity').min(0).max(1).onChange(
+    var wallOpacity_typ = wall_typ.add({Opacity : 1}, 'Opacity').min(0).max(1).step(0.1).onChange(
       function updateOpacityRoof(value){
             ShadMatWalls_typ.uniforms.opacity.value = value;
             
@@ -736,7 +738,7 @@ $(styleModification_typ.domElement).attr("hidden", true);
     );
     
   
-    var wallOpacity_dis = wall_dis.add({Opacity : 0.5}, 'Opacity').min(0).max(1).onChange(
+    var wallOpacity_dis = wall_dis.add({Opacity : 0.5}, 'Opacity').min(0).max(1).step(0.1).onChange(
       function updateOpacityRoof(value){
             ShadMatWalls_dis.uniforms.opacity.value = value;
             view.notifyChange(true);
@@ -843,7 +845,7 @@ view.notifyChange();
 
     //////////edge styles for typical style
     var edgeParams_typ = {
-               edgeStyles_typ: 'continuous',
+               edgeStyles_typ: 'Continuous',
             };  
     var edgeStyles_typ = edge_typ.add(edgeParams_typ, 'edgeStyles_typ', ["Continuous", "Dashed"]).name('edge Styles').listen();
 //to be used for saving and downloading the color of edge based on the edge style
@@ -865,8 +867,8 @@ var GapSizeTyp;
             }
            
             ShadMatEdges =  ShadMatEdges_typ_cont;  
-           EdgeColorTyp = ShadMatEdges_typ_cont.uniforms.color.value;
-        DashSizeTyp = "null";
+            EdgeColorTyp = ShadMatEdges_typ_cont.uniforms.color.value;
+            DashSizeTyp = "null";
             GapSizeTyp = "null";
 view.notifyChange();
   }
@@ -936,7 +938,7 @@ view.notifyChange();
       }
     ); 
     var shadingParams = {
-               shadingStyles: 'Without',
+               shadingStyles: 'with',
             };  
     var shadingStyles = shading.add(shadingParams, 'shadingStyles', ["without", "with"]).name('shadingStyles')
 .listen();
@@ -994,8 +996,8 @@ var FizzyTextt = function() {
 console.log(stylevv);
         stylevv.stylesvv.push(
             {"name": "Default", "WallColor"  : Default_wall_color, "RoofColor":ShadMatRoof_.uniforms.color.value, "EdgeColor":ShadMatEdges_.uniforms.color.value},
-            {"name": "Typical", "WallColor"  : ShadMatWalls_typ.uniforms.color.value, "RoofColor":ShadMatRoof_typ.uniforms.color.value, "EdgeStyle": edgeParams_typ.edgeStyles_typ, "EdgeColor":EdgeColorTyp, "DashSizee":DashSizeTyp, "GapSizee": GapSizeTyp},
-            {"name": "Discreet", "WallColor"  : ShadMatWalls_dis.uniforms.color.value, "RoofColor":ShadMatRoof_dis.uniforms.color.value, "EdgeStyle": edgeParams_dis.edgeStyles_dis, "EdgeColor":EdgeColorDis, "DashSizee":DashSizeDis, "GapSizee": GapSizeDis},
+            {"name": "Typical", "WallColor"  : ShadMatWalls_typ.uniforms.color.value, "WallOpacity": ShadMatWalls_typ.uniforms.opacity.value,  "RoofColor":ShadMatRoof_typ.uniforms.color.value, "RoofOpacity": ShadMatRoof_typ.uniforms.opacity.value, "EdgeStyle": edgeParams_typ.edgeStyles_typ, "EdgeColor":EdgeColorTyp, "DashSizee":DashSizeTyp, "GapSizee": GapSizeTyp},
+            {"name": "Discreet", "WallColor"  : ShadMatWalls_dis.uniforms.color.value, "WallOpacity": ShadMatWalls_dis.uniforms.opacity.value, "RoofColor":ShadMatRoof_dis.uniforms.color.value, "RoofOpacity": ShadMatRoof_dis.uniforms.opacity.value, "EdgeStyle": edgeParams_dis.edgeStyles_dis, "EdgeColor":EdgeColorDis, "DashSizee":DashSizeDis, "GapSizee": GapSizeDis},
             {"name": "Photorealistic", "WallTextureMode"  : ShadMatWalls3.uniforms.mode.value, "WallTextureScale":ShadMatWalls3.uniforms.texture_scale.value, "RoofTextureMode"  : ShadMatRoof3.uniforms.mode.value, "RoofTextureScale":ShadMatRoof3.uniforms.texture_scale.value}
         )
         var saveData = (function () {
