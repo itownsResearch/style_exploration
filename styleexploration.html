@@ -13,6 +13,8 @@
     </head>
 
     <body>
+            <input type="file" id="files" name="files[]" multiple />
+
         <div id="viewerDiv"></div>
         <script src="js/GUI/GuiTools.js"></script>
         <script src="dist/itowns.js"></script>
@@ -26,13 +28,15 @@
   
          var THREE = itowns.THREE;
           
+        </script>  
+         <script src="js/THREE.MeshLine.js"></script>
 
+         <script type="text/javascript">
      
  // predefined center of the scene (initial camera position)
 var  positionOnGlobe = { longitude: 2.418159, latitude: 48.846182, altitude: 1000 }
 var time = 5500;
 var pathTravel = [];
-var promises = [];
 //camera position based on user's geolocation
 var FizzyText = function() {
 
@@ -84,16 +88,16 @@ var FizzyText = function() {
                 var layer = new itowns.ColorLayer(config.id, config);
                 view.addLayer(layer).then(menuGlobe.addLayerGUI.bind(menuGlobe));
             }
-            //itowns.Fetcher.json('./layers/JSONLayers/Ortho.json').then(createWMTSSourceFromConfig).then(addColorLayerFromConfig);
-            //itowns.Fetcher.json('./layers/JSONLayers/DARK.json').then(createWMTSSourceFromConfig).then(addColorLayerFromConfig);
+            itowns.Fetcher.json('./layers/JSONLayers/Ortho.json').then(createWMTSSourceFromConfig).then(addColorLayerFromConfig);
+            itowns.Fetcher.json('./layers/JSONLayers/DARK.json').then(createWMTSSourceFromConfig).then(addColorLayerFromConfig);
             
             function addElevationLayerFromConfig(config) {
                 config.source = new itowns.WMTSSource(config.source);
                 var layer = new itowns.ElevationLayer(config.id, config);
                 view.addLayer(layer).then(menuGlobe.addLayerGUI.bind(menuGlobe));
             }
-            //itowns.Fetcher.json('./layers/JSONLayers/WORLD_DTM.json').then(addElevationLayerFromConfig);
-            //itowns.Fetcher.json('./layers/JSONLayers/IGN_MNT_HIGHRES.json').then(addElevationLayerFromConfig);
+            itowns.Fetcher.json('./layers/JSONLayers/WORLD_DTM.json').then(addElevationLayerFromConfig);
+            itowns.Fetcher.json('./layers/JSONLayers/IGN_MNT_HIGHRES.json').then(addElevationLayerFromConfig);
             ////////////building
             var color = new itowns.THREE.Color();
            
@@ -179,7 +183,6 @@ if(roof) {
     if(edges) {
        
     edgesArray.push(edges);
-   
     edges.computeLineDistances(); //in order to enable dash style on the new loaded tiles
     edges.material = ShadMatEdges;//in order to enable  style on the new loaded tiles
 
@@ -191,7 +194,64 @@ if(roof) {
     //alert( JSON.stringify(style_vv) );
 
 };
+//////sketchy lines
+var Fizzy = function() {
 
+this.sketch = function sketchyStilization() {
+
+    var arrayEdgesMeshLine = [];
+    let loader = new THREE.TextureLoader();
+        loader.crossOrigin = ''
+        let texture = loader.load ('textures/brush.png')
+    
+    let meshLineMaterial = new MeshLineMaterial({
+            map: texture,
+            useMap: true,
+            //color:  new THREE.Color('red'),
+            lineWidth: 2,
+            sizeAttenuation: 1
+        });
+
+    for (var j=0; j < edgesArray.length; ++j){
+
+        console.log(edgesArray[j].getWorldPosition());
+        arrayEdgesMeshLine = edgesArray[j].geometry.attributes.position.array;
+        var geometry = new THREE.Geometry();
+        for(var i = 0; i< arrayEdgesMeshLine.length; i = i+3){
+            geometry.vertices.push(new THREE.Vector3(arrayEdgesMeshLine[i],arrayEdgesMeshLine[i+1],arrayEdgesMeshLine[i+2]))
+        }
+        var line = new MeshLine();
+        line.setGeometry( geometry);
+        var myMesh = new THREE.Mesh(line.geometry, meshLineMaterial); 
+    
+        edgesArray[j].add(myMesh);
+        
+       // console.log(objGlobal);
+    }
+    console.log('len',arrayEdgesMeshLine)
+
+    var geometry = new THREE.Geometry();
+        for(var i = 0; i< arrayEdgesMeshLine.length; i = i+3){
+            geometry.vertices.push(new THREE.Vector3(arrayEdgesMeshLine[i],arrayEdgesMeshLine[i+1],arrayEdgesMeshLine[i+2]))
+        }
+        var line = new MeshLine();
+
+        line.setGeometry( geometry);
+       // console.log('zz',line)
+
+        //line.setGeometry( geometry, function( p ) { return 2 + Math.sin( 50 * p ); } );
+        
+        //texture.repeat.set (10,1) // doesnot work this way
+        //texture.wrapS = THREE.RepeatWrapping
+      
+        var myMesh = new THREE.Mesh(line.geometry, meshLineMaterial);
+        myMesh.updateMatrixWorld(true);    
+        view.scene.add( myMesh );
+        console.log('mymesh', myMesh);
+
+        }
+
+};
 
 //vertex  shaders
 const vertexShader = `
@@ -581,7 +641,7 @@ view.notifyChange();
         // In order to set opacity value differently for wall and roof instead of using 'wfsBuildingLayer.opacity = ShadMatRoof_dis.opacity'
         //wallsArray[i].material.opacity = ShadMatWalls_dis.opacity;
         //roofArray[i].material.opacity = ShadMatRoof_dis.opacity;
-       wfsBuildingLayer.opacity = ShadMatWalls_dis.opacity;
+      // wfsBuildingLayer.opacity = ShadMatWalls_dis.opacity;
        
         //i can use above line, but it doesnot work when we want to apply different opacity on different building parts or:----> following solution
         //we are using geometrylayer.js definelayerproperty('opacity') i can remove this and check weather it works. it can help for different opacity on diffeerent bui
@@ -985,47 +1045,256 @@ view.notifyChange();
 
  
  //save and download style
-var FizzyTextt = function() {
+ var FizzyTextt = function() {
 
-    this.SaveStyles = function ssss() {
+this.SaveStyles = function ssss() {
 
 
-        var stylevv = { "stylesvv" : [] };
-console.log(stylevv);
-        stylevv.stylesvv.push(
-            {"name": "Default", "WallColor"  : Default_wall_color, "RoofColor":ShadMatRoof_.uniforms.color.value, "EdgeColor":ShadMatEdges_.uniforms.color.value},
-            {"name": "Typical", "WallColor"  : ShadMatWalls_typ.uniforms.color.value, "RoofColor":ShadMatRoof_typ.uniforms.color.value, "EdgeStyle": edgeParams_typ.edgeStyles_typ, "EdgeColor":EdgeColorTyp, "DashSizee":DashSizeTyp, "GapSizee": GapSizeTyp},
-            {"name": "Discreet", "WallColor"  : ShadMatWalls_dis.uniforms.color.value, "RoofColor":ShadMatRoof_dis.uniforms.color.value, "EdgeStyle": edgeParams_dis.edgeStyles_dis, "EdgeColor":EdgeColorDis, "DashSizee":DashSizeDis, "GapSizee": GapSizeDis},
-            {"name": "Photorealistic", "WallTextureMode"  : ShadMatWalls3.uniforms.mode.value, "WallTextureScale":ShadMatWalls3.uniforms.texture_scale.value, "RoofTextureMode"  : ShadMatRoof3.uniforms.mode.value, "RoofTextureScale":ShadMatRoof3.uniforms.texture_scale.value}
-        )
-        var saveData = (function () {
-    var a = document.createElement("a");
-    document.body.appendChild(a);
-    a.style = "display: none";
-    return function (stylevv, fileName) {
-        let blob = new Blob([JSON.stringify(stylevv)], {type: "text/plain;charset=utf-8"}),
+    var stylevv = { "stylesvv" : [] };
+    console.log(stylevv);
+    stylevv.stylesvv.push(
+        {"name": "Default", "WallColor"  : { "r": Default_wall_color.r, "g": Default_wall_color.g, "b":Default_wall_color.b}, "RoofColor": { "r": ShadMatRoof_.uniforms.color.value.r, "g": ShadMatRoof_.uniforms.color.value.g, "b":ShadMatRoof_.uniforms.color.value.b}, "EdgeColor": { "r": ShadMatEdges_.uniforms.color.value.r, "g": ShadMatEdges_.uniforms.color.value.g, "b":ShadMatEdges_.uniforms.color.value.b}},
+        {"name": "Typical", "WallColor"  : { "r": ShadMatWalls_typ.uniforms.color.value.r, "g": ShadMatWalls_typ.uniforms.color.value.g, "b":ShadMatWalls_typ.uniforms.color.value.b} , "WallOpacity": ShadMatWalls_typ.uniforms.opacity.value,  "RoofColor": { "r": ShadMatRoof_typ.uniforms.color.value.r, "g": ShadMatRoof_typ.uniforms.color.value.g, "b":ShadMatRoof_typ.uniforms.color.value.b}, "RoofOpacity": ShadMatRoof_typ.uniforms.opacity.value, "EdgeStyle": edgeParams_typ.edgeStyles_typ, "EdgeColorContinuous": { "r": ShadMatEdges_typ_cont.uniforms.color.value.r, "g": ShadMatEdges_typ_cont.uniforms.color.value.g, "b":ShadMatEdges_typ_cont.uniforms.color.value.b}, "DashSizee":DashSizeTyp, "GapSizee": GapSizeTyp},
+        {"name": "Discreet", "WallColor"  : { "r": ShadMatWalls_dis.uniforms.color.value.r, "g": ShadMatWalls_dis.uniforms.color.value.g, "b":ShadMatWalls_dis.uniforms.color.value.b} , "WallOpacity": ShadMatWalls_dis.uniforms.opacity.value, "RoofColor": { "r": ShadMatRoof_dis.uniforms.color.value.r, "g": ShadMatRoof_dis.uniforms.color.value.g, "b":ShadMatRoof_dis.uniforms.color.value.b}, "RoofOpacity": ShadMatRoof_dis.uniforms.opacity.value, "EdgeStyle": edgeParams_dis.edgeStyles_dis, "EdgeColorContinuous": { "r": ShadMatEdges_dis_cont.uniforms.color.value.r, "g": ShadMatEdges_dis_cont.uniforms.color.value.g, "b":ShadMatEdges_dis_cont.uniforms.color.value.b}, "DashSizee":DashSizeDis, "GapSizee": GapSizeDis},
+        {"name": "Photorealistic", "WallTextureMode"  : ShadMatWalls3.uniforms.mode.value, "WallTextureScale":ShadMatWalls3.uniforms.texture_scale.value, "RoofTextureMode"  : ShadMatRoof3.uniforms.mode.value, "RoofTextureScale":ShadMatRoof3.uniforms.texture_scale.value}
+    )
+    var saveData = (function () {
+        var a = document.createElement("a");
+        document.body.appendChild(a);
+        a.style = "display: none";
+        return function (stylevv, fileName) {
+            let blob = new Blob([JSON.stringify(stylevv)], {type: "text/plain;charset=utf-8"}),
             url = window.URL.createObjectURL(blob);
-        a.href = url;
-        a.download = fileName;
-        a.click();
-        window.URL.revokeObjectURL(url);
-    };
-}());
+            a.href = url;
+            a.download = fileName;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        };
+    }());
 
     fileName = "style_file.json";
 
-saveData(stylevv, fileName);
-       
-        
+    saveData(stylevv, fileName);
+   
+    
 
-    }
+}
 
 };
 //calling the function which save and downloads style
- var textt = new FizzyTextt();
-  
-  var navv = menuGlobe.gui.addFolder('Save Styles');
-  navv.add(textt, 'SaveStyles');
+var textt = new FizzyTextt();
+
+var navv = menuGlobe.gui.addFolder('Save Styles');
+navv.add(textt, 'SaveStyles');
+
+
+var texttt = new Fizzy();
+
+var navvv = menuGlobe.gui.addFolder('sketchyStyle');
+navvv.add(texttt, 'sketch');
+
+var FizzyLoad = function () {
+
+this.LoadStyle = function doSubmit(){
+            
+            $.ajax({
+                 url: 'jsonFiles/style_file.json',
+                 //dataType: 'json',
+                 type: 'get',
+                 cache: false,
+                 success: function(data) {
+                    /* $(data.stylesvv).each(function(index, value){
+                         console.log(value);
+                     });*/
+                     //console.log(data.stylesvv[2].name);
+                   /* for (var i=0; i < data.stylesvv.length; ++i){
+                         if (data.stylesvv[i].name == "Default"){
+                             console.log("yes");
+                         }
+                         else{
+                             console.log("no");
+                         }
+                         //console.log(data.stylesvv[i].name);
+                     }*/
+                     //console.log(data.stylesvv[0].WallColor.r)
+                     //Default_wall_color.r = data.stylesvv[0].
+                     //ShadMatWalls3.uniforms.mode.value = data.stylesvv[3].WallTextureMode;
+                     Default_wall_color.r = data.stylesvv[0].WallColor.r;
+                     Default_wall_color.g = data.stylesvv[0].WallColor.g;
+                     Default_wall_color.b = data.stylesvv[0].WallColor.b;
+                     
+                     ShadMatRoof_.uniforms.color.value.r = data.stylesvv[0].RoofColor.r;
+                     ShadMatRoof_.uniforms.color.value.g = data.stylesvv[0].RoofColor.g;
+                     ShadMatRoof_.uniforms.color.value.b = data.stylesvv[0].RoofColor.b;
+
+                     ShadMatEdges_.uniforms.color.value.r = data.stylesvv[0].EdgeColor.r;
+                     ShadMatEdges_.uniforms.color.value.g = data.stylesvv[0].EdgeColor.g;
+                     ShadMatEdges_.uniforms.color.value.b = data.stylesvv[0].EdgeColor.b;
+
+                     ////////typical
+                     ShadMatWalls_typ.uniforms.color.value.r = data.stylesvv[1].WallColor.r;
+                     ShadMatWalls_typ.uniforms.color.value.g = data.stylesvv[1].WallColor.g;
+                     ShadMatWalls_typ.uniforms.color.value.b = data.stylesvv[1].WallColor.b;
+
+                     ShadMatWalls_typ.uniforms.opacity.value = data.stylesvv[1].WallOpacity;
+
+                     ShadMatRoof_typ.uniforms.color.value.r = data.stylesvv[1].RoofColor.r;
+                     ShadMatRoof_typ.uniforms.color.value.g = data.stylesvv[1].RoofColor.g;
+                     ShadMatRoof_typ.uniforms.color.value.b = data.stylesvv[1].RoofColor.b;
+
+                     ShadMatRoof_typ.uniforms.opacity.value = data.stylesvv[1].RoofOpacity;
+
+                     edgeParams_typ.edgeStyles_typ = data.stylesvv[1].EdgeStyle;
+
+                     ShadMatEdges_typ_cont.uniforms.color.value.r = data.stylesvv[1].EdgeColorContinuous.r;
+                     ShadMatEdges_typ_cont.uniforms.color.value.g = data.stylesvv[1].EdgeColorContinuous.g;
+                     ShadMatEdges_typ_cont.uniforms.color.value.b = data.stylesvv[1].EdgeColorContinuous.b;
+
+                     DashSizeTyp = data.stylesvv[1].DashSizee;
+                     GapSizeTyp = data.stylesvv[1].GapSizee;
+                     /////discreet
+                     ShadMatWalls_dis.uniforms.color.value.r = data.stylesvv[2].WallColor.r;
+                     ShadMatWalls_dis.uniforms.color.value.g = data.stylesvv[2].WallColor.g;
+                     ShadMatWalls_dis.uniforms.color.value.b = data.stylesvv[2].WallColor.b;
+
+                     ShadMatWalls_dis.uniforms.opacity.value = data.stylesvv[2].WallOpacity;
+
+                     ShadMatRoof_dis.uniforms.color.value.r = data.stylesvv[2].RoofColor.r;
+                     ShadMatRoof_dis.uniforms.color.value.g = data.stylesvv[2].RoofColor.g;
+                     ShadMatRoof_dis.uniforms.color.value.b = data.stylesvv[2].RoofColor.b;
+
+                     ShadMatRoof_dis.uniforms.opacity.value = data.stylesvv[2].RoofOpacity;
+
+                     edgeParams_dis.edgeStyles_typ = data.stylesvv[2].EdgeStyle;
+
+                     ShadMatEdges_dis_cont.uniforms.color.value.r = data.stylesvv[2].EdgeColorContinuous.r;
+                     ShadMatEdges_dis_cont.uniforms.color.value.g = data.stylesvv[2].EdgeColorContinuous.g;
+                     ShadMatEdges_dis_cont.uniforms.color.value.b = data.stylesvv[2].EdgeColorContinuous.b;
+
+                     DashSizeDis = data.stylesvv[2].DashSizee;
+                     GapSizeDis = data.stylesvv[2].GapSizee;
+                    //////Photorealistic
+                    ShadMatWalls3.uniforms.mode.value = data.stylesvv[3].WallTextureMode;
+                    ShadMatWalls3.uniforms.texture_scale.value = data.stylesvv[3].WallTextureScale;
+                    ShadMatRoof3.uniforms.mode.value = data.stylesvv[3].RoofTextureMode;
+                    ShadMatRoof3.uniforms.texture_scale.value = data.stylesvv[3].RoofTextureScale;
+
+
+
+                 }
+             });
+         }
+
+}
+
+
+var textLoad = new FizzyLoad();
+
+var navLoad = menuGlobe.gui.addFolder('Load Style');
+navLoad.add(textLoad, 'LoadStyle');
+
+
+
+
+
+
+
+
+
+/////////loading style file using
+var paramsss = {
+loadFile : function() { 
+        document.getElementById('files').click();
+        function handleFileSelect(evt) {
+var files = evt.target.files; // FileList object
+
+// files is a FileList of File objects. List some properties.
+var output = [];
+for (var i = 0, f; f = files[i]; i++) {
+    var reader = new FileReader();
+
+    reader.onload = (function (theFile) {
+        return function (e) {
+            console.log('e readAsText = ', e);
+            console.log('e readAsText target = ', e.target);
+            try {
+                data = JSON.parse(e.target.result);
+                    Default_wall_color.r = data.stylesvv[0].WallColor.r;
+                     Default_wall_color.g = data.stylesvv[0].WallColor.g;
+                     Default_wall_color.b = data.stylesvv[0].WallColor.b;
+                     
+                     ShadMatRoof_.uniforms.color.value.r = data.stylesvv[0].RoofColor.r;
+                     ShadMatRoof_.uniforms.color.value.g = data.stylesvv[0].RoofColor.g;
+                     ShadMatRoof_.uniforms.color.value.b = data.stylesvv[0].RoofColor.b;
+
+                     ShadMatEdges_.uniforms.color.value.r = data.stylesvv[0].EdgeColor.r;
+                     ShadMatEdges_.uniforms.color.value.g = data.stylesvv[0].EdgeColor.g;
+                     ShadMatEdges_.uniforms.color.value.b = data.stylesvv[0].EdgeColor.b;
+
+                     ////////typical
+                     ShadMatWalls_typ.uniforms.color.value.r = data.stylesvv[1].WallColor.r;
+                     ShadMatWalls_typ.uniforms.color.value.g = data.stylesvv[1].WallColor.g;
+                     ShadMatWalls_typ.uniforms.color.value.b = data.stylesvv[1].WallColor.b;
+
+                     ShadMatWalls_typ.uniforms.opacity.value = data.stylesvv[1].WallOpacity;
+
+                     ShadMatRoof_typ.uniforms.color.value.r = data.stylesvv[1].RoofColor.r;
+                     ShadMatRoof_typ.uniforms.color.value.g = data.stylesvv[1].RoofColor.g;
+                     ShadMatRoof_typ.uniforms.color.value.b = data.stylesvv[1].RoofColor.b;
+
+                     ShadMatRoof_typ.uniforms.opacity.value = data.stylesvv[1].RoofOpacity;
+
+                     edgeParams_typ.edgeStyles_typ = data.stylesvv[1].EdgeStyle;
+
+                     ShadMatEdges_typ_cont.uniforms.color.value.r = data.stylesvv[1].EdgeColorContinuous.r;
+                     ShadMatEdges_typ_cont.uniforms.color.value.g = data.stylesvv[1].EdgeColorContinuous.g;
+                     ShadMatEdges_typ_cont.uniforms.color.value.b = data.stylesvv[1].EdgeColorContinuous.b;
+
+                     DashSizeTyp = data.stylesvv[1].DashSizee;
+                     GapSizeTyp = data.stylesvv[1].GapSizee;
+                     /////discreet
+                     ShadMatWalls_dis.uniforms.color.value.r = data.stylesvv[2].WallColor.r;
+                     ShadMatWalls_dis.uniforms.color.value.g = data.stylesvv[2].WallColor.g;
+                     ShadMatWalls_dis.uniforms.color.value.b = data.stylesvv[2].WallColor.b;
+
+                     ShadMatWalls_dis.uniforms.opacity.value = data.stylesvv[2].WallOpacity;
+
+                     ShadMatRoof_dis.uniforms.color.value.r = data.stylesvv[2].RoofColor.r;
+                     ShadMatRoof_dis.uniforms.color.value.g = data.stylesvv[2].RoofColor.g;
+                     ShadMatRoof_dis.uniforms.color.value.b = data.stylesvv[2].RoofColor.b;
+
+                     ShadMatRoof_dis.uniforms.opacity.value = data.stylesvv[2].RoofOpacity;
+
+                     edgeParams_dis.edgeStyles_typ = data.stylesvv[2].EdgeStyle;
+
+                     ShadMatEdges_dis_cont.uniforms.color.value.r = data.stylesvv[2].EdgeColorContinuous.r;
+                     ShadMatEdges_dis_cont.uniforms.color.value.g = data.stylesvv[2].EdgeColorContinuous.g;
+                     ShadMatEdges_dis_cont.uniforms.color.value.b = data.stylesvv[2].EdgeColorContinuous.b;
+
+                     DashSizeDis = data.stylesvv[2].DashSizee;
+                     GapSizeDis = data.stylesvv[2].GapSizee;
+                    //////Photorealistic
+                    ShadMatWalls3.uniforms.mode.value = data.stylesvv[3].WallTextureMode;
+                    ShadMatWalls3.uniforms.texture_scale.value = data.stylesvv[3].WallTextureScale;
+                    ShadMatRoof3.uniforms.mode.value = data.stylesvv[3].RoofTextureMode;
+                    ShadMatRoof3.uniforms.texture_scale.value = data.stylesvv[3].RoofTextureScale;
+            console.log(data.stylesvv/*[1].WallColor.r*/)
+            } catch (ex) {
+                alert('ex when trying to parse json = ' + ex);
+            }
+        }
+    })(f);
+    reader.readAsText(f);
+}
+
+}
+document.getElementById('files').addEventListener('change', handleFileSelect, false);
+}
+};
+var navLoadd = menuGlobe.gui.addFolder('Load Style File');
+navLoadd.add(paramsss, 'loadFile').name('Select JSON file');
+
+
 
 
   

@@ -20,11 +20,19 @@
         <script src="js/proj4defs/3946.js"></script>
         <script src="dist/debug.js"></script>
         <script src="js/jquery-3.3.0.js"></script>
+        <script type="text/javascript">
+        
+            var root = this;
+           root.THREE = itowns.THREE;
+                
+        </script>
+
+<script src="js/THREE.MeshLine.js"></script>
 
         
         <script type="text/javascript">
   
-         var THREE = itowns.THREE;
+        // var THREE = itowns.THREE;
           
 
      
@@ -84,8 +92,8 @@ var FizzyText = function() {
                 var layer = new itowns.ColorLayer(config.id, config);
                 view.addLayer(layer).then(menuGlobe.addLayerGUI.bind(menuGlobe));
             }
-            itowns.Fetcher.json('./layers/JSONLayers/Ortho.json').then(createWMTSSourceFromConfig).then(addColorLayerFromConfig);
-            itowns.Fetcher.json('./layers/JSONLayers/DARK.json').then(createWMTSSourceFromConfig).then(addColorLayerFromConfig);
+            //itowns.Fetcher.json('./layers/JSONLayers/Ortho.json').then(createWMTSSourceFromConfig).then(addColorLayerFromConfig);
+           // itowns.Fetcher.json('./layers/JSONLayers/DARK.json').then(createWMTSSourceFromConfig).then(addColorLayerFromConfig);
             
             function addElevationLayerFromConfig(config) {
                 config.source = new itowns.WMTSSource(config.source);
@@ -156,8 +164,10 @@ var FizzyText = function() {
                 source: wfsBuildingSource
             });
             view.addLayer(wfsBuildingLayer);//.then(layer => delete layer.opacity);
-function modifyShader(mesh) {
-    //$(styleModification.domElement).attr("hidden", true);
+
+           
+
+   function modifyShader(mesh) {
 
 // Start with super small scale (scaling effect at load)
 mesh.scale.z = 0.01;
@@ -167,6 +177,7 @@ meshes.push(mesh);
 var walls = mesh.children[0];
 var roof = mesh.children[1];
 var edges = mesh.children[2];
+//var edgess = mesh.children[2];
 if(walls) {
     wallsArray.push(walls);
     walls.material = ShadMatWalls;
@@ -177,14 +188,15 @@ if(roof) {
 }
 
     if(edges) {
-       
+    console.log('im written here')
     edgesArray.push(edges);
-   
+    
     edges.computeLineDistances(); //in order to enable dash style on the new loaded tiles
     edges.material = ShadMatEdges;//in order to enable  style on the new loaded tiles
 
 
 }
+//geometry.vertices.push(edgess);
 
 
 //console.log(Object.values(style_vv));
@@ -312,8 +324,7 @@ const vertexShader = `
  
             `;
         //shader implementation
-           
-            
+
 //let time = 0;
             let currentPos = new THREE.Vector3();
             let texture_walls =   new THREE.TextureLoader().load("textures/wall.png");
@@ -439,7 +450,21 @@ let meshMaterial = new THREE.ShaderMaterial({
 });
 return meshMaterial;
 }
-            
+ //var xx = edgesArray[4].geometry.attributes.position.array[0]
+
+ //var yy= edgesArray[4].geometry.attributes.position.array[1]
+ //var zz= edgesArray[4].geometry.attributes.position.array[2]
+//var geometryy = new THREE.Geometry();
+//geometryy.vertices.push(edgesArray);
+//geometryy.vertices.push(new THREE.Vector3(2,5,4));
+//console.log("getting geometry from edgesArray")
+//var xxx= edgesArray[1].geometry;
+
+  //var texture_lines = new THREE.TextureLoader().load("textures/brush.png");
+  //texture_lines.wrapS = THREE.RepeatWrapping;
+  
+
+
 var ShadMatRoof = createMaterial_color(vertexShader, fragmentShader_roof, new THREE.Color(0Xa19f9f));
 var ShadMatRoof_ = createMaterial_color(vertexShader, fragmentShader_roof, new THREE.Color(0Xa19f9f));
 var ShadMatRoof_typ  = createMaterial_color(vertexShader, fragmentShader_roof, new THREE.Color(0X6c3527)); 
@@ -458,12 +483,52 @@ var ShadMatEdges_ = createMaterial_color(vertexShader, fragmentShader_edges, new
 var ShadMatEdges_dis_dash = new THREE.LineDashedMaterial({color: 0xffffff, dashSize:1,linewidth: 100, gapSize: 3});
 var ShadMatEdges_dis_cont = createMaterial_color(vertexShader, fragmentShader_edges, new THREE.Color(0X666666));
 var ShadMatEdges_typ_dash = new THREE.LineDashedMaterial({color: 0xffffff, dashSize:1,linewidth: 100, gapSize: 3});
+
+
+   
+//var testt = new THREE.Geometry();
+
+/*testt.vertices.push(new THREE.Vector3(
+     edgesArray[1].geometry.attributes.position.array[0],
+     edgesArray[1].geometry.attributes.position.array[1],
+     edgesArray[1].geometry.attributes.position.array[2]
+     )
+ );*/
+
+
+ //testt.vertices.push(edgesArray);
+var linee =  new MeshLine();
+linee.setGeometry(edgesArray); 
+let loader = new THREE.TextureLoader();
+loader.crossOrigin = ''
+let textureee = loader.load("textures/wall.png")
+
+
+var ShadMatEdges_typ_stro = new MeshLineMaterial({
+    map: textureee,
+    useMap: true,
+    transparent: false,
+    //opacity: 0.8,
+    color: new THREE.Color('red'),
+    repeat: new THREE.Vector2(1,1),
+    resolution: new THREE.Vector2(window.innerWidth, window.innerHeight),
+    sizeAttenuation: false,
+    lineWidth: 90
+    
+  
+  
+});
+
 var ShadMatEdges_typ_cont = createMaterial_color(vertexShader, fragmentShader_edges, new THREE.Color(0X070b12));
+
 var ShadMatEdges3 = new THREE.MeshPhongMaterial({
     color: 0X6c3527,
     opacity: 0,
     transparent: true,
   });
+
+
+
 //calling the function which gets user's current geographical location and sets camera position based on user position 
   var text = new FizzyText();
   
@@ -532,9 +597,13 @@ view.notifyChange();
         //edgesArray[i].computeLineDistances();
         //edgesArray[i].geometry.computeLineDistances();
         if (edgeParams_typ.edgeStyles_typ==='Dashed'){
-        edgesArray[i].material = ShadMatEdges_typ_dash} else {
+        edgesArray[i].material = ShadMatEdges_typ_dash} 
+        else if (edgeParams_typ.edgeStyles_typ==='Continuous'){
             edgesArray[i].material = ShadMatEdges_typ_cont;
-        } //console.log(edgesArray[i]);
+        } else if (edgeParams_typ.edgeStyles_typ==='Stroke'){
+            edgesArray[i].material = ShadMatEdges_typ_stro
+        }
+         //console.log(edgesArray[i]);
         //wallsArray[i].material.color = new THREE.Color(0xc50202);
            // console.log('ress', wallsArray[i]);
            
@@ -549,7 +618,10 @@ view.notifyChange();
 
                 } else if (edgeParams_typ.edgeStyles_typ==='Continuous'){
                     ShadMatEdges = ShadMatEdges_typ_cont;
+        } else if (edgeParams_typ.edgeStyles_typ==='Stroke'){
+                    ShadMatEdges = ShadMatEdges_typ_stro;
         }
+        
             //ShadMatEdges= ShadMatEdges_typ_cont;
            // wfsBuildingLayer.opacity = ShadMatEdges_typ_cont.opacity;
 
@@ -633,6 +705,8 @@ view.notifyChange();
   }
 });
 
+
+ 
 
     
 var styleModification_def = menuGlobe.gui.addFolder('Default Style Modification')
@@ -847,7 +921,7 @@ view.notifyChange();
     var edgeParams_typ = {
                edgeStyles_typ: 'Continuous',
             };  
-    var edgeStyles_typ = edge_typ.add(edgeParams_typ, 'edgeStyles_typ', ["Continuous", "Dashed"]).name('edge Styles').listen();
+    var edgeStyles_typ = edge_typ.add(edgeParams_typ, 'edgeStyles_typ', ["Continuous", "Dashed", "Stroke"]).name('edge Styles').listen();
 //to be used for saving and downloading the color of edge based on the edge style
 var EdgeColorTyp;
 var DashSizeTyp;
@@ -900,9 +974,33 @@ view.notifyChange();
 
             
 view.notifyChange();
+ }else if (edgeParams_typ.edgeStyles_typ==='Stroke'){
+    for (var i = 0; i < wallsArray.length; ++i){
+        $(edgeColor_typ.domElement).attr("hidden", true);
+        $(edgeOpacity_typ.domElement).attr("hidden", true);
+        $(edgeDashSize_typ.domElement).attr("hidden", false);
+        $(edgeGapSize_typ.domElement).attr("hidden", false);
+        $(edgeDashColor_typ.domElement).attr("hidden", false);
+
+        
+        //edgesArray[i].geometry.computeLineDistances();
+        edgesArray[i].material = ShadMatEdges_typ_stro; 
+       
+        //ShadMatEdges_typ_dash.edgeDashSize_typ=edgeDashSize_typ;
+            //ShadMatEdges_typ_dash.edgeGapSize_typ=edgeGapSize_typ;
+           // ShadMatEdges_typ_dash.edgeDashColor_typ=edgeDashColor_typ;
+       // edgesArray[i].computeLineDistances();//console.log(edgesArray[i]);
+        //wallsArray[i].material.color = new THREE.Color(0xc50202);
+           // console.log('ress', wallsArray[i]);
+            }
+            ShadMatEdges = ShadMatEdges_typ_stro;
+           
+
+
+            
+view.notifyChange();
  }
  });
-
 
 
 
@@ -1033,9 +1131,7 @@ saveData(stylevv, fileName);
   
 
 
-
- 
-
+  
 
 
 
