@@ -386,13 +386,13 @@ const vertexShader = `
                 //    gl_FragColor = vec4(0.180,0.098,0.001,1.);
                 // }
 
-                vec4 finalColor = vec4(0.005,0.030,0.000,1.);
+                vec4 finalColor = vec4(0.000, 0.000, 0.000, 1.);
               float finalOpacity;
               if(zoomLevel < 17.){
                 finalOpacity = (zoomLevel-14.)*0.3333;
 
-                vec4 finalColor2 = vec4(0.180,0.098,0.001,1.);
-                finalColor.rgb = mix(finalColor.rgb, finalColor2.rgb, finalOpacity);
+                vec4 finalColor2 = vec4(0.240, 0.208, 0.222, 1.);
+                finalColor.rgb = mix(finalColor2.rgb, finalColor.rgb, finalOpacity);
 
                 
               }else{
