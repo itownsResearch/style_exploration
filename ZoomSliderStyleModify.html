@@ -128,7 +128,7 @@ var promises = [];
                 meshes = meshes.filter(function filter(m) { return m.scale.z < 1; });
             };
             view.addFrameRequester(itowns.MAIN_LOOP_EVENTS.BEFORE_RENDER, scaler);
-            
+            view.controls.setZoom(17);
             var wfsBuildingSource = new itowns.WFSSource({
                 url: 'https://wxs.ign.fr/3ht7xcw6f7nciopo16etuqp2/geoportail/wfs?',
                 version: '2.0.0',
@@ -258,11 +258,11 @@ const vertexShader = `
             varying vec2 vUv;
             uniform float opacity;
             uniform float Originality;
+            uniform float linePatternWall;
 
             uniform float zoomLevel;
             uniform float alphaWall;
             uniform float check;
-
 
             uniform vec3 color;
             uniform float time;
@@ -271,6 +271,58 @@ const vertexShader = `
             varying float vZbottom;
 
             varying float vBid;
+            /////////////////noise
+        float random (in vec2 st) {
+    return fract(sin(dot(st.xy,
+                         vec2(12.9898,78.233)))
+                * 43758.5453123);
+}
+
+// Value noise by Inigo Quilez - iq/2013
+// https://www.shadertoy.com/view/lsf3WH
+float noise(vec2 st) {
+    vec2 i = floor(st);
+    vec2 f = fract(st);
+    vec2 u = f*f*(3.0-2.0*f);
+    return mix( mix( random( i + vec2(0.0,0.0) ),
+                     random( i + vec2(1.0,0.0) ), u.x),
+                mix( random( i + vec2(0.0,1.0) ),
+                     random( i + vec2(1.0,1.0) ), u.x), u.y);
+}
+
+mat2 rotate2d(float angle){
+    return mat2(cos(angle),-sin(angle),
+                sin(angle),cos(angle));
+}
+//////contolling the scale of line patterns
+float lines(in vec2 pos, float b){
+    float scale = (zoomLevel - 14.) * (40./3.);
+    float scale2 = (zoomLevel - 20.) * (40./3.);
+
+if (zoomLevel < 17.){
+    if (check == 0.){
+    pos *= scale;
+    }
+    else {
+        pos *= linePatternWall;
+    }
+}
+else {
+    if (check == 0.){
+    pos *= scale2;
+    }
+    else
+    {
+        pos *= linePatternWall;  
+    }
+}
+   
+    return smoothstep(0.0,
+                    .5+b*.5,
+                    abs((sin(pos.x*3.1415)+b*2.0))*.5);
+}
+
+/////////////////////
 
 
             void main(){
@@ -286,30 +338,21 @@ const vertexShader = `
                 } else if (mode == TYP) {
                     gl_FragColor = vec4(color, opacity);
                 } 
-                
+ 
+                vec2 u_resolution = vec2(1920, 1080);
 
-               // if(vBid == 21908890.0){
-                //    gl_FragColor = texture2D(texture_walls, normUV);
-               // } else if (vBid == 21908934.0){ 
-                //     gl_FragColor = vec4(1.,0.,0.,0.5);//yellow
-              //  } else { 
-                //     gl_FragColor = vec4(1.,1.,0.,1.);//yellow
-               // }
+vec2 st = gl_FragCoord.xy/u_resolution.xy;
+st.y *= u_resolution.y/u_resolution.x;
+vec2 pos = st.yx*vec2(20.,7.);
 
-              //vec4 finalColor = vec4(1.);
-             // float finalOpacity;
-              //if(Originality < 0.5){
-              //  finalOpacity = Originality*2.;
-               // vec4 finalTexture = texture2D(texture_walls, normUV);
-                //finalColor.rgb = mix(finalTexture.rgb, finalColor.rgb, finalOpacity);
-             // }else{
-              //  finalOpacity = (Originality-0.5)*2.;
-               // vec4 finalColor2 = vec4(0.395, 0.151, 0.000, 1.);
-               // finalColor.rgb = mix(finalColor.rgb, finalColor2.rgb, finalOpacity);
-             // } 
-             // gl_FragColor = finalColor;
-               
-              vec4 finalColor = vec4(1.);
+float pattern = pos.x;
+// Add noise
+pos = rotate2d( noise(pos) ) * pos;
+
+// Draw lines
+pattern = lines(pos,.01);
+
+vec4 finalColor = vec4(vec3(pattern),1.0);
               float finalOpacity;
               if(zoomLevel < 17.){
                 if (check == 0.){
@@ -324,7 +367,7 @@ const vertexShader = `
                 finalColor.rgb = mix(finalColor2.rgb, finalColor.rgb, finalOpacity);
               }else{
                   if (check == 0.){
-                finalOpacity = (zoomLevel-17.)*0.3333;
+                        finalOpacity = (zoomLevel-17.)*0.3333;
                 }
                 else {
                         finalOpacity = alphaWall;
@@ -360,18 +403,73 @@ const vertexShader = `
             uniform int mode;
             varying float vBid;
 
+
             uniform float texture_scale;
             varying vec2 vUv;
             uniform float opacity;
             uniform float Originality;
             uniform float zoomLevel;
             uniform float alphaRoof;
+            uniform float linePatternRoof;
             uniform float check;
             uniform vec3 color;
             uniform float time;
             uniform vec3 currentPos;
             varying float dist;
             varying float vZbottom;
+
+//////////////////////////////////////noise
+        float random (in vec2 st) {
+    return fract(sin(dot(st.xy,
+                         vec2(12.9898,78.233)))
+                * 43758.5453123);
+}
+
+// Value noise by Inigo Quilez - iq/2013
+// https://www.shadertoy.com/view/lsf3WH
+float noise(vec2 st) {
+    vec2 i = floor(st);
+    vec2 f = fract(st);
+    vec2 u = f*f*(3.0-2.0*f);
+    return mix( mix( random( i + vec2(0.0,0.0) ),
+                     random( i + vec2(1.0,0.0) ), u.x),
+                mix( random( i + vec2(0.0,1.0) ),
+                     random( i + vec2(1.0,1.0) ), u.x), u.y);
+}
+
+mat2 rotate2d(float angle){
+    return mat2(cos(angle),-sin(angle),
+                sin(angle),cos(angle));
+}
+//////contolling the scale of line patterns
+float lines(in vec2 pos, float b){
+    float scale = (zoomLevel - 14.) * (40./3.);
+    float scale2 = (zoomLevel - 20.) * (40./3.);
+
+if (zoomLevel < 17.){
+    if (check == 0.){
+    pos *= scale;
+    }
+    else {
+        pos *= linePatternRoof;
+    }
+}
+else {
+    if (check == 0.){
+    pos *= scale2;
+    }
+    else
+    {
+        pos *= linePatternRoof;  
+    }
+}
+   
+    return smoothstep(0.2,
+                    .5+b*.5,
+                    abs((sin(pos.x*3.1415)+b*2.0))*.5);
+}
+
+/////////////////////
             
             void main(){
             #include <logdepthbuf_fragment>
@@ -386,24 +484,22 @@ const vertexShader = `
                 } else if (mode == TYP) {
                     gl_FragColor = vec4(color, opacity);
                 } 
-                //if(vBid == 21908890.0){
-                //  gl_FragColor = texture2D(texture_roof, normUV);
-                // } else if (vBid == 21908934.0){ 
-                //   gl_FragColor = vec4(1.,0.,0.,0.5);//yellow
-                //   } else { 
-                //    gl_FragColor = vec4(1.,1.,0.,1.);//yellow
-                 // }
-             
-                // if(Originality < 0.5){
-                // gl_FragColor = texture2D(texture_roof, normUV);
-                //} else if (Originality < 0.99){ 
-                //     gl_FragColor = vec4(0.005,0.030,0.000,0.5);//yellow
-                // } else { 
-                //    gl_FragColor = vec4(0.180,0.098,0.001,1.);
-                // }
                 
+                vec2 u_resolution = vec2(1920, 1080);
 
-                vec4 finalColor = vec4(0.000, 0.000, 0.000, 1.);
+                vec2 st = gl_FragCoord.xy/u_resolution.xy;
+                st.y *= u_resolution.y/u_resolution.x;
+                vec2 pos = st.yx*vec2(20.,7.);
+
+                float pattern = pos.x;
+                // Add noise
+                pos = rotate2d( noise(pos) ) * pos;
+
+                // Draw lines
+                pattern = lines(pos,.01);
+
+                vec4 finalColor = vec4(vec3(pattern),1.0);   
+
               float finalOpacity;
               if(zoomLevel < 17.){
                   if (check == 0.){
@@ -488,11 +584,13 @@ let uniforms = {
     texture: {type: 'sampler2D', value: defaultexture},
     //color: {type: 'c', value: defaultColor},                    // Default color parameter
     Originality: {type: 'f', value: 0},
-    zoomLevel: {type: 'f', value: 14},
+    zoomLevel: {type: 'f', value: 17},
     alphaWall: {type: 'f', value: 0},
     alphaRoof: {type: 'f', value: 0},
-
     check: {type: 'i', value: 0},
+    finalOpacityWall: {type: 'f', value: 0},
+    linePatternWall: {type: 'f', value: 0},
+    linePatternRoof: {type: 'f', value: 0},
 
 
     opacity: {type: 'f', value: 1.0},                           // Default opacity parameter
@@ -627,6 +725,7 @@ var ShadMatEdges3 = new THREE.MeshPhongMaterial({
       function originalityValuee(d){
         ShadMatWalls.uniforms.zoomLevel.value = d;
         ShadMatRoof.uniforms.zoomLevel.value = d;
+        //ShadMatWalls.uniforms.finalOpacityWall.value;
 
         view.controls.setZoom(d)
         view._layers[0].attachedLayers[5].opacity = (d-14)/6
@@ -634,8 +733,8 @@ var ShadMatEdges3 = new THREE.MeshPhongMaterial({
               view.controls.setZoom(d);
               //console.log("dd", z);
             });*/
-
         view.notifyChange(true);
+        return d;
 
       }
       );
@@ -646,23 +745,36 @@ var ShadMatEdges3 = new THREE.MeshPhongMaterial({
         function checkval(c){
         ShadMatWalls.uniforms.check.value = c;
         ShadMatRoof.uniforms.check.value = c;
-
         view.notifyChange(true);
+        return c;
 
       }
       );
-      
-      
+     
+
       var walls = modifications.addFolder('walls')
 
       var alphaWall = walls.add({alphaWall : 0}, 'alphaWall').min(0).max(1).step(0.01).name('alpha').onChange(
       function alphaValue(a){
         ShadMatWalls.uniforms.alphaWall.value = a;
+        
         view.notifyChange(true);
+        return a;
 
       }
+      
       );
+      var linePatternWall = walls.add({linePatternWall : 0}, 'linePatternWall').min(0).max(40).step(0.01).name('linePatternWall').onChange(
+      function alphaValue(a){
+        ShadMatWalls.uniforms.linePatternWall.value = a;
+        
+        view.notifyChange(true);
+        return a;
 
+      }
+      
+      );
+   
 
       var roof = modifications.addFolder('roof')
 
@@ -671,9 +783,21 @@ var ShadMatEdges3 = new THREE.MeshPhongMaterial({
 
             ShadMatRoof.uniforms.alphaRoof.value = h;
             view.notifyChange(true);
+            return h;
 
       }
       );
+      var linePatternRoof = roof.add({linePatternRoof : 0}, 'linePatternRoof').min(0).max(40).step(0.01).name('linePatternRoof').onChange(
+      function alphaValue(a){
+        ShadMatRoof.uniforms.linePatternRoof.value = a;
+        
+        view.notifyChange(true);
+        return a;
+
+      }
+      
+      );
+   
 
       var edges = modifications.addFolder('edges')
 
